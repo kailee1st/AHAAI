@@ -1,0 +1,1 @@
+- [Aha Moment v2 — UX 패턴 및 반복 문제 유형](project_ux_patterns.md) — PracticePage 상태 초기화 패턴, MetacogModal 설계, 반복 버그 유형
