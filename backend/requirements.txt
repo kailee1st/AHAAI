@@ -4,3 +4,4 @@ anthropic
 python-dotenv
 PyMuPDF
 json-repair
+python-multipart
