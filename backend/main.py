@@ -33,6 +33,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:5175",
     # Vercel 프로덕션 / 프리뷰 도메인
     "https://ahaai.vercel.app",
+    "https://frontend-nine-theta-94.vercel.app",
     "https://ahaai.onrender.com",
     # Vercel 프리뷰 URL 패턴 (*.vercel.app)
 ]
