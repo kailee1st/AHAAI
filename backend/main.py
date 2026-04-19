@@ -33,6 +33,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:5175",
     # Vercel 프로덕션 / 프리뷰 도메인
     "https://ahaai.vercel.app",
+    "https://ahaai.onrender.com",
     # Vercel 프리뷰 URL 패턴 (*.vercel.app)
 ]
 # CORS_ORIGINS 환경변수로 추가 도메인 주입 가능 (쉼표 구분)
