@@ -35,6 +35,8 @@ ALLOWED_ORIGINS = [
     "https://ahaai.vercel.app",
     "https://frontend-nine-theta-94.vercel.app",
     "https://ahaai.onrender.com",
+    "https://aha-study.com",
+    "https://www.aha-study.com",
     # Vercel 프리뷰 URL 패턴 (*.vercel.app)
 ]
 # CORS_ORIGINS 환경변수로 추가 도메인 주입 가능 (쉼표 구분)
