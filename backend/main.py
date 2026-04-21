@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 from prompts import (
     GENERATE_SYSTEM,
-    TUTOR_SYSTEM,
     WRONG_ANSWER_SYSTEM,
     GRADE_SYSTEM,
     build_generate_prompt,
@@ -21,6 +20,8 @@ from prompts import (
     build_grade_messages,
     build_hint_messages,
     build_wrong_answer_messages,
+    classify_hint_type,
+    get_tutor_system,
 )
 
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -210,15 +211,17 @@ async def process_file(file: UploadFile = File(...)):
 
 @app.post("/api/hint")
 async def get_hint(req: HintRequest):
-    """소크라테스 힌트 요청"""
-    messages = build_hint_messages(req.problem, req.hints_log, req.question, req.attempts)
+    """소크라테스 힌트 요청 — 힌트 유형 자동 분류 후 적합한 프롬프트 사용"""
+    hint_type = classify_hint_type(req.question, req.hints_log)
+    system = get_tutor_system(hint_type)
+    messages = build_hint_messages(req.problem, req.hints_log, req.question, req.attempts, hint_type)
     response = await client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=512,
-        system=TUTOR_SYSTEM,
+        system=system,
         messages=messages,
     )
-    return {"hint": response.content[0].text}
+    return {"hint": response.content[0].text, "hint_type": hint_type}
 
 
 @app.post("/api/wrong-answer")

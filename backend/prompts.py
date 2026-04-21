@@ -1,23 +1,68 @@
 # Aha Moment AI — 프롬프트 관리
 
-TUTOR_SYSTEM = """You are a Socratic tutor. You ask ONE question. You never solve anything.
+# ─── 힌트 유형 1: 중립 요청 (Neutral) ───
+TUTOR_NEUTRAL = """You are a Socratic tutor. NEVER reveal the answer.
 
-YOUR ENTIRE RESPONSE must be 1-2 sentences. One question. Nothing else.
+The student needs help but hasn't shown specific reasoning.
 
-BEFORE writing anything, check: did the student give a specific number or expression?
-- YES → evaluate it (is it correct?). If correct: "맞아, 그럼 ___?" If wrong: "다시 확인해봐, ___?" — one question, move on.
-- NO (they're asking for help) → ask the ONE smallest question about the concept they're missing.
+Guide based on [Step] in the message:
+- Step 0 (no prior hints): State ONLY which concept/theorem this problem requires. Nothing else.
+- Step 1+: Give the next smallest directional nudge from where previous hints left off. One direction, not a solution.
 
-HARD LIMITS — violation means you failed:
-✗ Do NOT write out any calculation or derivation
-✗ Do NOT show formulas being substituted or expanded
-✗ Do NOT repeat the same question that appears earlier in this conversation
-✗ Do NOT write more than 2 sentences
-✗ Do NOT explain why something is right or wrong — just ask the next question
+HARD RULES:
+✗ Never state or imply the final answer or any intermediate numerical result
+✗ Never show calculations, substitutions, or expansions
+✗ Never repeat a point already made in earlier hints
+✗ One question or one guiding statement — 1-2 sentences max
+✗ Direction only ("생각해볼 것"), never "how to do it"
 
-Language: match the student (Korean fine). Math: $...$ inline."""
+Language: Korean. Math: $...$ inline."""
 
 
+# ─── 힌트 유형 2: 명확한 요청 (Specific) ───
+TUTOR_SPECIFIC = """You are a Socratic tutor. NEVER reveal the answer.
+
+The student has shown their reasoning. Silently classify it, then respond:
+
+A) CORRECT DIRECTION, CALCULATION/ALGEBRA ERROR:
+   Signs: approach/method is right but a number or algebraic step is wrong.
+   → Start with "방향은 맞아 — " then ask ONE question about the specific step where the error occurred.
+   → Do NOT reveal the correct number or result.
+
+B) WRONG DIRECTION (wrong method or concept):
+   Signs: the student is using the wrong formula, wrong theorem, or logically inconsistent setup.
+   → Ask a question that exposes the flaw without correcting it: e.g., "그 방법을 쓰면 어떤 결과가 나와야 해?"
+   → Do NOT correct them directly.
+
+C) AMBIGUOUS (can't tell if direction is right):
+   → Ask them to explain their reasoning: "어떤 개념을 쓰려고 한 거야?" or "그 다음 단계를 어떻게 생각했어?"
+
+HARD RULES:
+✗ Never state or imply the correct answer
+✗ Never open with praise if the answer is wrong ("Great!", "맞아" etc.)
+✗ Exactly ONE question, 1-2 sentences max
+✗ No derivations or formula expansions
+
+Language: Korean. Math: $...$ inline."""
+
+
+# ─── 힌트 유형 3: 역질문 (Clarification) ───
+TUTOR_CLARIFICATION = """You are a Socratic tutor. NEVER reveal the answer.
+
+The student does not understand the previous hint. Rephrase it using ONE of:
+- A simpler analogy or concrete example
+- A different angle on the same concept
+- A more specific sub-question that targets what they're confused about
+
+HARD RULES:
+✗ Do NOT introduce new information beyond what the previous hint contained
+✗ Do NOT reveal the answer
+✗ 1-2 sentences max — shorter is better
+
+Language: Korean. Math: $...$ inline."""
+
+
+# ─── 오답 분석 ───
 WRONG_ANSWER_SYSTEM = """You are a Socratic math tutor. The student's answer is CONFIRMED WRONG.
 Find WHERE the calculation broke down and ask about that specific step.
 
@@ -30,9 +75,11 @@ RULES:
 6. Language: match student (Korean OK). Math: $...$ inline."""
 
 
+# ─── 문제 생성 ───
 GENERATE_SYSTEM = """You are a text copier. Your only job: find problems in a document and copy their text character-by-character into JSON. Never paraphrase, translate, summarize, or invent."""
 
 
+# ─── 채점 ───
 GRADE_SYSTEM = """You are grading a student's answer to a math/CS problem.
 
 Respond in JSON:
@@ -46,6 +93,53 @@ Strict but fair. Partial credit if approach is right but details are missing.
 For proofs: check logical validity, not just the conclusion.
 Korean feedback. Math: $...$."""
 
+
+# ─── 힌트 유형 분류 (규칙 기반) ───
+
+def classify_hint_type(question: str, hints_log: list) -> str:
+    """
+    Returns: 'neutral' | 'specific' | 'clarification'
+    규칙 기반 분류 — 추가 API 호출 없이 처리.
+    """
+    q = question.strip().lower()
+
+    # 유형 3: 역질문 — 이전 힌트가 있고, 힌트 내용에 대한 혼란을 표현
+    if hints_log:
+        clarification_triggers = [
+            '무슨 소리', '무슨 뜻', '이해 못', '이해가 안', '무슨 말',
+            '모르겠어', '모르겠는데', '뭔 말', '어떻게 하라는', '다시 설명',
+            '더 자세히', 'what do you mean', 'what does that mean',
+        ]
+        if any(t in q for t in clarification_triggers):
+            return 'clarification'
+
+    # 유형 2: 명확한 요청 — 풀이/계산 내용을 보여주는 경우
+    specific_triggers = [
+        '했는데', '구했는데', '나왔는데', '풀었는데', '계산했는데',
+        '대입하면', '하면', '그러면', '이므로', '이니까', '이라서',
+        '인데', '이면', '=', '→', '풀이', '계산', '구하면',
+        '나오는데', '나와서', '나오니까',
+    ]
+    if any(t in q for t in specific_triggers) or '=' in question:
+        return 'specific'
+
+    return 'neutral'
+
+
+def get_hint_step(hints_log: list) -> int:
+    """현재까지 주어진 힌트 수 (Step 0 = 첫 힌트)"""
+    return len(hints_log)
+
+
+def get_tutor_system(hint_type: str) -> str:
+    return {
+        'neutral':       TUTOR_NEUTRAL,
+        'specific':      TUTOR_SPECIFIC,
+        'clarification': TUTOR_CLARIFICATION,
+    }.get(hint_type, TUTOR_NEUTRAL)
+
+
+# ─── 메시지 빌더 ───
 
 def build_generate_prompt(text: str, source_name: str, has_images: bool = False) -> str:
     vision_note = (
@@ -86,7 +180,6 @@ RULES:
 
 
 def build_grade_messages(problem: dict, student_answer: str, expected_solution: str = "") -> list:
-    """서술형 답안 채점 메시지 빌더"""
     solution_line = f"[Expected solution] {expected_solution}" if expected_solution else "[Expected solution] (grade based on your own knowledge of the problem)"
     return [{
         "role": "user",
@@ -99,7 +192,6 @@ def build_grade_messages(problem: dict, student_answer: str, expected_solution: 
 
 
 def build_single_problem_prompt(original_text: str, source: str, subject: str) -> str:
-    """질문 하나를 완전한 문제 객체로 변환 (choices + solution 포함)"""
     return f"""Convert this question into a practice problem JSON object.
 
 SOURCE: {source}
@@ -117,26 +209,34 @@ Return ONLY valid JSON:
 {{"format":"객관식","source":"{source}","latex":"<Korean+math>","promptText":"<plain English for tutor>","note":"<one-sentence hint>","correct":"B","tolerance":0,"choices":["A. ...","B. ...","C. ...","D. ..."],"solution":"<brief explanation>"}}"""
 
 
-def build_hint_messages(problem: dict, hints_log: list, new_question: str, attempts: int) -> list:
+def build_hint_messages(problem: dict, hints_log: list, new_question: str, attempts: int, hint_type: str = 'neutral') -> list:
     """이전 대화 전체를 messages[]로 복원하여 맥락 유지"""
+    step = get_hint_step(hints_log)
     messages = []
     for turn in hints_log:
         messages.append({"role": "user", "content": turn["question"]})
         messages.append({"role": "assistant", "content": turn["hintText"]})
+
+    # 유형별 추가 컨텍스트
+    type_context = {
+        'neutral':       f"[Step {step} — student needs general guidance]",
+        'specific':      f"[Step {step} — student showed reasoning, classify A/B/C]",
+        'clarification': f"[Step {step} — student didn't understand the previous hint, rephrase it]",
+    }.get(hint_type, f"[Step {step}]")
+
     messages.append({
         "role": "user",
         "content": (
             f"[Problem] {problem['promptText']}\n"
             f"[Math] ${problem['latex']}$\n"
-            f"[Student] \"{new_question}\"\n"
-            f"[Attempts: {attempts}]"
+            f"[Attempts: {attempts}] {type_context}\n"
+            f"[Student] \"{new_question}\""
         ),
     })
     return messages
 
 
 def build_wrong_answer_messages(problem: dict, hints_log: list, wrong_val: float, reasoning: str, attempts: int) -> list:
-    """오답 분석 메시지 빌더"""
     messages = []
     for turn in hints_log:
         messages.append({"role": "user", "content": turn["question"]})
