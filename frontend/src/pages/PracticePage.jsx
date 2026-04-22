@@ -427,6 +427,15 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
     const idx = currentIdx;
     const snap = state;
     setHintModal(false);
+
+    // 창작문제는 저장된 hint 필드 사용 (AI 호출 없음)
+    if (problem.isCreative && problem.hint) {
+      const newLog = [...snap.hintsLog, { question, hintText: problem.hint }];
+      updateState(idx, { hintsLog: newLog });
+      openHintInLog(newLog);
+      return;
+    }
+
     setLoading(true); setLoadingText('AI 튜터가 힌트를 생성하는 중...');
     try {
       const hint = await getHint({ problem, hintsLog: snap.hintsLog, question, attempts: snap.attempts });
