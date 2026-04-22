@@ -5,4 +5,5 @@ python-dotenv
 PyMuPDF
 json-repair
 python-multipart
+youtube-transcript-api
 httpx
