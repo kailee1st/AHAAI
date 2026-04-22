@@ -256,7 +256,10 @@ async def process_text(req: ProcessTextRequest):
 async def process_youtube(req: YouTubeRequest):
     """YouTube URL → 자막 추출 → 문제 + 요약 생성"""
     import traceback, httpx
-    from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+    except ImportError:
+        raise HTTPException(status_code=503, detail="youtube-transcript-api 패키지가 설치되지 않았습니다.")
     try:
         # 비디오 ID 추출
         m = re.search(r'(?:v=|youtu\.be/|embed/|shorts/)([a-zA-Z0-9_-]{11})', req.url)
