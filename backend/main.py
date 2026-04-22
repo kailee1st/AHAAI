@@ -209,6 +209,20 @@ async def process_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
 
 
+_LATEX_CMD = re.compile(
+    r'(?<!\$)'                          # $ 앞에 없을 때
+    r'(\\(?:frac|sqrt|sum|int|lim|infty|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega|text|mathbb|vec|hat|bar|cdot|times|leq|geq|neq|in|subset|forall|exists)\b[^$\n]*?)'
+    r'(?!\$)',                          # $ 뒤에 없을 때
+)
+
+def fix_hint_latex(text: str) -> str:
+    """힌트 응답에서 $ 없이 노출된 LaTeX 명령어를 인라인으로 감싸기"""
+    def wrap(m):
+        inner = m.group(1).strip()
+        return f"${inner}$"
+    return _LATEX_CMD.sub(wrap, text)
+
+
 @app.post("/api/hint")
 async def get_hint(req: HintRequest):
     """소크라테스 힌트 요청 — 힌트 유형 자동 분류 후 적합한 프롬프트 사용"""
@@ -221,7 +235,8 @@ async def get_hint(req: HintRequest):
         system=system,
         messages=messages,
     )
-    return {"hint": response.content[0].text, "hint_type": hint_type}
+    hint_text = fix_hint_latex(response.content[0].text)
+    return {"hint": hint_text, "hint_type": hint_type}
 
 
 @app.post("/api/wrong-answer")
@@ -431,6 +446,38 @@ async def extract_problems(text: str, images_b64: list[str], source_name: str):
         p.setdefault("solution",  None)
     skipped = parsed.get("skipped", [])
     print(f"[extract] problems={len(problems)}, formats={[p.get('format') for p in problems]}")
+
+    # Haiku로 수식 LaTeX 감싸기 검수 (문제 텍스트 일괄 처리)
+    if problems:
+        texts = [p["latex"] for p in problems]
+        numbered = "\n".join(f"[{i}] {t}" for i, t in enumerate(texts))
+        fix_prompt = (
+            "You are a LaTeX formatter. Each line below is a math problem prefixed with [N].\n"
+            "Wrap ALL math expressions in $...$ (inline). Standalone equations → $$...$$.\n"
+            "Do NOT change any Korean words, variable names, or numbers.\n"
+            "Return ONLY the fixed lines in the same [N] prefix format. No commentary.\n\n"
+            f"{numbered}"
+        )
+        try:
+            res = await client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=4000,
+                temperature=0,
+                messages=[{"role": "user", "content": fix_prompt}],
+            )
+            fixed_lines = res.content[0].text.strip().splitlines()
+            for line in fixed_lines:
+                m = re.match(r'\[(\d+)\]\s*(.*)', line)
+                if m:
+                    idx = int(m.group(1))
+                    if 0 <= idx < len(problems):
+                        fixed = m.group(2).strip()
+                        problems[idx]["latex"]      = fixed
+                        problems[idx]["promptText"] = fixed
+            print(f"[extract] LaTeX 검수 완료")
+        except Exception as e:
+            print(f"[extract] LaTeX 검수 오류 (원본 사용): {e}")
+
     return problems, skipped, parsed.get("title", source_name), parsed.get("subject", "")
 
 
