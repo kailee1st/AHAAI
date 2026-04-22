@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { generateCreativeProblems } from '../api/client';
 
-const PROBLEM_TYPES = ['4지선다', '빈칸채우기', '단답형'];
+const PROBLEM_TYPES = ['4지선다', '참/거짓', '빈칸채우기', '단답형'];
 
 export default function AddProblemModal({ allChapters, defaultChapterId, onGenerated, onClose }) {
   const noChapters = allChapters.length === 0;

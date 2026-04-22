@@ -106,7 +106,7 @@ class GenerateCreativeRequest(BaseModel):
     topics: list[str] = []
     topic: str
     count: int = 3
-    problem_type: str = "4지선다"  # '4지선다' | '빈칸채우기' | '단답형'
+    problem_type: str = "4지선다"  # '4지선다' | '참/거짓' | '빈칸채우기' | '단답형'
     subject: str = ""
 
 
@@ -673,19 +673,29 @@ async def generate_creative(req: GenerateCreativeRequest):
     count = max(1, min(5, req.count))
     type_instructions = {
         "4지선다": (
-            "Multiple choice with exactly 4 options.\n"
+            "Multiple choice with exactly 4 options (A/B/C/D).\n"
+            "- Randomize which option holds the correct answer each time (do NOT always put it in A).\n"
+            "- Keep all options roughly the same length (1-2 lines each).\n"
+            "- 3 distractors must be plausible but clearly wrong on inspection.\n"
             "- choices: [\"A. ...\", \"B. ...\", \"C. ...\", \"D. ...\"]\n"
             "- correct: \"A\", \"B\", \"C\", or \"D\""
         ),
+        "참/거짓": (
+            "True/False question based strictly on the provided content.\n"
+            "- Statement must be clearly true OR false — no ambiguity.\n"
+            "- choices: [\"A. 참 (True)\", \"B. 거짓 (False)\"]\n"
+            "- correct: \"A\" if true, \"B\" if false"
+        ),
         "빈칸채우기": (
-            "Fill-in-the-blank. Replace exactly ONE key term/phrase with ___.\n"
+            "Fill-in-the-blank. Replace exactly ONE key term or short phrase with ___.\n"
+            "- The blank must have a single unambiguous answer.\n"
             "- choices: null\n"
-            "- correct: the exact word/phrase that fills the blank"
+            "- correct: the exact word/phrase that fills the blank (Korean OK)"
         ),
         "단답형": (
-            "Short answer question.\n"
+            "Short answer question requiring 1-3 word or 1-sentence response.\n"
             "- choices: null\n"
-            "- correct: concise expected answer (1-3 words or a number)"
+            "- correct: concise expected answer"
         ),
     }.get(req.problem_type, "Short answer. choices: null.")
 
@@ -702,20 +712,27 @@ async def generate_creative(req: GenerateCreativeRequest):
         f"Create {count} quiz problem(s) on the topic: '{req.topic}'\n"
         f"Subject: {req.subject}\n"
         f"Problem format: {req.problem_type}\n"
+        f"Difficulty: medium\n"
         f"{custom_note}\n"
+        f"STRICT RULES:\n"
+        f"- Base ALL problems ONLY on the provided content below. Do NOT use external knowledge.\n"
+        f"- Each problem must include 'explanation' (why the answer is correct, 1-2 sentences) "
+        f"and 'hint' (a nudge toward the answer without revealing it).\n"
         f"Format rules:\n{type_instructions}\n\n"
-        f"Content summary:\n{req.summary[:6000]}\n\n"
+        f"Content:\n{req.summary[:6000]}\n\n"
         f"Return ONLY a JSON array (no markdown):\n"
         f'[{{"latex": "Korean problem text with $math$ if needed", '
         f'"promptText": "same text plain", '
         f'"format": "{req.problem_type}", '
         f'"choices": [...] or null, '
-        f'"correct": "answer"}}]'
+        f'"correct": "answer", '
+        f'"explanation": "why this is correct", '
+        f'"hint": "nudge without revealing answer"}}]'
     )
 
     response = await client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=3000,
+        max_tokens=4000,
         messages=[{"role": "user", "content": prompt}],
     )
     raw = response.content[0].text.strip()
@@ -742,14 +759,15 @@ async def generate_creative(req: GenerateCreativeRequest):
     result = []
     for p in problems[:count]:
         result.append({
-            "latex":      p.get("latex", ""),
-            "promptText": p.get("promptText") or p.get("latex", ""),
-            "format":     req.problem_type,
-            "choices":    p.get("choices"),
-            "correct":    p.get("correct"),
-            "tolerance":  0,
-            "solution":   None,
-            "isCreative": True,
+            "latex":       p.get("latex", ""),
+            "promptText":  p.get("promptText") or p.get("latex", ""),
+            "format":      req.problem_type,
+            "choices":     p.get("choices"),
+            "correct":     p.get("correct"),
+            "tolerance":   0,
+            "solution":    p.get("explanation"),
+            "hint":        p.get("hint"),
+            "isCreative":  True,
         })
 
     return result
