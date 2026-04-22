@@ -265,9 +265,23 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
       subject: chapter?.subject ?? '',
     }).then(full => {
       if (cancelled) return;
-      setProblems(prev => prev.map((p, i) =>
-        i === currentIdx ? { ...p, choices: full.choices, correct: full.correct, solution: full.solution } : p
-      ));
+      setProblems(prev => {
+        const next = prev.map((p, i) =>
+          i === currentIdx ? { ...p, choices: full.choices, correct: full.correct, solution: full.solution } : p
+        );
+        // choices를 챕터 localStorage에 영구 저장
+        try {
+          const uid = auth.currentUser?.uid;
+          const key = uid ? `aha_chapters_${uid}` : 'aha_chapters';
+          const chapters = JSON.parse(localStorage.getItem(key) || '[]');
+          const ci = chapters.findIndex(c => c.id === chapterId);
+          if (ci !== -1) {
+            chapters[ci].problems = next;
+            localStorage.setItem(key, JSON.stringify(chapters));
+          }
+        } catch { /* noop */ }
+        return next;
+      });
     }).catch(err => console.error('choices gen failed', err))
       .finally(() => { if (!cancelled) setChoicesGenerating(false); });
     return () => { cancelled = true; };

@@ -3,18 +3,22 @@
 # ─── 힌트 유형 1: 중립 요청 (Neutral) ───
 TUTOR_NEUTRAL = """You are a Socratic tutor. NEVER reveal the answer.
 
-The student needs help but hasn't shown specific reasoning.
+Read the full conversation history to determine where the student currently is, then give exactly ONE nudge forward.
 
-Guide based on [Step] in the message:
-- Step 0 (no prior hints): State ONLY which concept/theorem this problem requires. Nothing else.
-- Step 1+: Give the next smallest directional nudge from where previous hints left off. One direction, not a solution.
+Follow this alternating pattern — judge from history which step comes next:
+- No hints yet → Step 0: name the concept/theorem only.
+- After Step 0 → Step 1a: describe what the student must DO first (direction only, no result).
+- After 1a → Step 1b: ask the student what result they get from doing that action. Do NOT supply the result.
+- After student provides the 1b result → Step 2a: describe the next action to take on that result.
+- After 2a → Step 2b: ask what result they get from that action.
+- Continue alternating a (direction) → b (ask for result) until the student reaches the answer.
 
 HARD RULES:
-✗ Never state or imply the final answer or any intermediate numerical result
+✗ Never reveal ANY intermediate result — this includes matrices, expressions, vectors, values the student must derive themselves
+✗ If the problem requires deriving an object (matrix, set, function…) before the final answer, do NOT give that object. Ask the student to find it.
 ✗ Never show calculations, substitutions, or expansions
 ✗ Never repeat a point already made in earlier hints
-✗ One question or one guiding statement — 1-2 sentences max
-✗ Direction only ("생각해볼 것"), never "how to do it"
+✗ One guiding statement or question — 1-2 sentences max
 
 Language: Korean. Math: $...$ inline."""
 
@@ -106,9 +110,10 @@ def classify_hint_type(question: str, hints_log: list) -> str:
     # 유형 3: 역질문 — 이전 힌트가 있고, 힌트 내용에 대한 혼란을 표현
     if hints_log:
         clarification_triggers = [
-            '무슨 소리', '무슨 뜻', '이해 못', '이해가 안', '무슨 말',
-            '모르겠어', '모르겠는데', '뭔 말', '어떻게 하라는', '다시 설명',
-            '더 자세히', 'what do you mean', 'what does that mean',
+            '무슨 소리', '무슨 뜻', '무슨 말', '뭔 말',
+            '이해가 안', '이해 못',
+            '어떻게 하라는', '다시 설명', '더 자세히',
+            'what do you mean', 'what does that mean',
         ]
         if any(t in q for t in clarification_triggers):
             return 'clarification'
@@ -219,10 +224,10 @@ def build_hint_messages(problem: dict, hints_log: list, new_question: str, attem
 
     # 유형별 추가 컨텍스트
     type_context = {
-        'neutral':       f"[Step {step} — student needs general guidance]",
-        'specific':      f"[Step {step} — student showed reasoning, classify A/B/C]",
-        'clarification': f"[Step {step} — student didn't understand the previous hint, rephrase it]",
-    }.get(hint_type, f"[Step {step}]")
+        'neutral':       f"[Hints so far: {step} — student needs general guidance, read history to judge where they are]",
+        'specific':      f"[Hints so far: {step} — student showed reasoning, classify A/B/C]",
+        'clarification': f"[Hints so far: {step} — student didn't understand the previous hint, rephrase it]",
+    }.get(hint_type, f"[Hints so far: {step}]")
 
     messages.append({
         "role": "user",
