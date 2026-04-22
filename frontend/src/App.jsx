@@ -8,7 +8,7 @@ import PracticePage from './pages/PracticePage';
 import ProblemReviewPage from './pages/ProblemReviewPage';
 import AccountPage from './pages/AccountPage';
 import { DEMO_CHAPTER, BUILTIN_LIMITS_CHAPTER } from './data/demoChapter';
-import { processFile, processText } from './api/client';
+import { processFile, processText, processYouTube } from './api/client';
 import './App.css';
 
 function getChaptersForUser(uid) {
@@ -111,6 +111,41 @@ function AppInner() {
         title: result.title || title, subject: result.subject,
         source: 'blank', summary: result.summary,
         extractedText: text,
+        problems: result.problems,
+        skipped: result.skipped ?? [],
+        topics: result.topics ?? [],
+        creativeProblems: [],
+        createdAt: new Date().toISOString(),
+      };
+      saveChapters([...getChaptersForUser(user.uid), ch]);
+    } catch (err) {
+      clearInterval(progressTimer.current);
+      setUploadProgress(0); setUploadStage('');
+      setUploadError(err.response?.data?.detail || err.message || '생성 실패');
+    } finally { setUploading(false); }
+  }
+
+  async function handleUploadYouTube({ url }) {
+    if (!user) { setShowLogin(true); return; }
+    const { allowed } = await checkUploadLimit();
+    if (!allowed) {
+      setUploadError(`이번 달 업로드 횟수(${UPLOAD_LIMIT}회)를 모두 사용했습니다.`);
+      return;
+    }
+    setUploading(true); setUploadError('');
+    setUploadProgress(0); setUploadStage('자막 추출 중...');
+    startProgressSim();
+    try {
+      const result = await processYouTube({ url });
+      clearInterval(progressTimer.current);
+      setUploadProgress(100); setUploadStage('완료!');
+      await incrementUploadCount();
+      const ch = {
+        id: `chapter_${Date.now()}`, folderId: null,
+        title: result.title, subject: result.subject,
+        source: 'youtube', summary: result.summary,
+        extractedText: result.extractedText ?? '',
+        youtubeUrl: result.youtubeUrl ?? url,
         problems: result.problems,
         skipped: result.skipped ?? [],
         topics: result.topics ?? [],
@@ -230,6 +265,7 @@ function AppInner() {
             uploadStage={uploadStage}
             onUpload={handleUpload}
             onUploadText={handleUploadText}
+            onUploadYouTube={handleUploadYouTube}
             chapters={chapters}
             folders={folders}
             onChaptersChange={saveChapters}

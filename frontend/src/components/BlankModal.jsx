@@ -41,7 +41,7 @@ export default function BlankModal({ onSubmit, onClose }) {
             placeholder="여기에 학습 내용을 작성하세요..."
             value={text}
             onChange={e => { setText(e.target.value); setError(''); }}
-            rows={14}
+            rows={8}
           />
           <div className="blank-char-count">{text.length.toLocaleString()}자</div>
 

@@ -62,6 +62,11 @@ export async function generateSingleProblem({ originalText, source, subject }) {
 }
 
 // 창작문제 생성
+export async function processYouTube({ url }) {
+  const { data } = await api.post('/api/process-youtube', { url });
+  return data;
+}
+
 export async function processText({ text, title }) {
   const { data } = await api.post('/api/process-text', { text, title });
   return data;

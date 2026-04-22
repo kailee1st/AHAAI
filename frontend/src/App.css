@@ -962,8 +962,8 @@ body {
 .summary-editable .sum-toc li { font-size: 0.85rem; margin-bottom: 3px; }
 
 /* ── Blank 모달 ── */
-.blank-modal { width: min(640px, 94vw); }
-.blank-modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+.blank-modal { width: min(640px, 94vw); max-height: 90vh; display: flex; flex-direction: column; }
+.blank-modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
 .blank-label { font-size: 0.82rem; font-weight: 700; color: var(--text); }
 .blank-title-input {
   width: 100%; padding: 9px 12px; border: 1px solid var(--border);

@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import BlankModal from '../components/BlankModal';
+import YouTubeModal from '../components/YouTubeModal';
 
 export default function HomePage({
-  uploading, uploadError, uploadProgress, uploadStage, onUpload, onUploadText,
+  uploading, uploadError, uploadProgress, uploadStage, onUpload, onUploadText, onUploadYouTube,
   chapters, folders,
   onChaptersChange, onFoldersChange,
   onStudy, onProblem,
 }) {
-  const [showBlankModal, setShowBlankModal] = useState(false);
+  const [showBlankModal,   setShowBlankModal]   = useState(false);
+  const [showYouTubeModal, setShowYouTubeModal] = useState(false);
   const [currentFolderId,  setCurrentFolderId]  = useState(null);
   const [newFolderInput,   setNewFolderInput]   = useState(false);
   const [newFolderName,    setNewFolderName]    = useState('');
@@ -102,6 +104,7 @@ export default function HomePage({
     : chapters.filter(c => !c.folderId);
 
   return (
+    <>
     <div className="home-content">
       {/* ── 상단 문구 ── */}
       <div className="home-tagline">
@@ -136,7 +139,7 @@ export default function HomePage({
             <div className="upload-other-tiles">
               <button className="upload-other-tile" onClick={() => setShowBlankModal(true)} disabled={uploading}><span>📝</span><span>Blank</span></button>
               <button className="upload-other-tile soon" disabled><span>🎧</span><span>Audio</span><span className="tile-soon-badge">준비 중</span></button>
-              <button className="upload-other-tile soon" disabled><span>▶️</span><span>YouTube</span><span className="tile-soon-badge">준비 중</span></button>
+              <button className="upload-other-tile" onClick={() => setShowYouTubeModal(true)} disabled={uploading}><span>▶️</span><span>YouTube</span></button>
             </div>
           </>
         )}
@@ -246,6 +249,16 @@ export default function HomePage({
         }}
       />
     )}
+    {showYouTubeModal && (
+      <YouTubeModal
+        onClose={() => setShowYouTubeModal(false)}
+        onSubmit={({ url }) => {
+          setShowYouTubeModal(false);
+          onUploadYouTube({ url });
+        }}
+      />
+    )}
+    </>
   );
 }
 

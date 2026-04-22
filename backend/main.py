@@ -93,6 +93,10 @@ class ProcessTextRequest(BaseModel):
     title: str = "직접 작성"
 
 
+class YouTubeRequest(BaseModel):
+    url: str
+
+
 class SolveRequest(BaseModel):
     problem: dict
 
@@ -245,6 +249,59 @@ async def process_text(req: ProcessTextRequest):
     except Exception as e:
         tb = traceback.format_exc()
         print(f"[process-text ERROR] {type(e).__name__}: {e}\n{tb}")
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
+
+
+@app.post("/api/process-youtube")
+async def process_youtube(req: YouTubeRequest):
+    """YouTube URL → 자막 추출 → 문제 + 요약 생성"""
+    import traceback, httpx
+    from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+    try:
+        # 비디오 ID 추출
+        m = re.search(r'(?:v=|youtu\.be/|embed/|shorts/)([a-zA-Z0-9_-]{11})', req.url)
+        if not m:
+            raise HTTPException(status_code=400, detail="유효한 YouTube URL이 아닙니다.")
+        video_id = m.group(1)
+
+        # 제목 가져오기 (oEmbed, 인증 불필요)
+        title = "YouTube 강의"
+        try:
+            async with httpx.AsyncClient(timeout=8) as hc:
+                r = await hc.get(f"https://www.youtube.com/oembed?url=https://youtu.be/{video_id}&format=json")
+                if r.status_code == 200:
+                    title = r.json().get("title", title)
+        except Exception:
+            pass
+
+        # 자막 추출 (한국어 → 영어 → 자동생성 순)
+        try:
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            try:
+                transcript = transcript_list.find_transcript(['ko', 'en'])
+            except Exception:
+                transcript = transcript_list.find_generated_transcript(['ko', 'en'])
+            entries = transcript.fetch()
+            text = " ".join(e.get("text", "") for e in entries).strip()
+        except (NoTranscriptFound, TranscriptsDisabled):
+            raise HTTPException(status_code=400, detail="이 영상에는 자막이 없습니다. 자막이 있는 영상을 사용해주세요.")
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"자막 추출 실패: {str(e)}")
+
+        if len(text) < 100:
+            raise HTTPException(status_code=400, detail="자막이 너무 짧습니다.")
+
+        truncated = text[:MAX_CHARS]
+        result = await generate_content(truncated, [], title)
+        result["extractedText"] = text[:15000]
+        result["youtubeUrl"] = f"https://www.youtube.com/watch?v={video_id}"
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"[youtube ERROR] {type(e).__name__}: {e}\n{tb}")
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
 
 
