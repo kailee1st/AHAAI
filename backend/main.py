@@ -277,12 +277,26 @@ async def process_youtube(req: YouTubeRequest):
         # 자막 추출 (한국어 → 영어 → 자동생성 순)
         try:
             transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            try:
-                transcript = transcript_list.find_transcript(['ko', 'en'])
-            except Exception:
-                transcript = transcript_list.find_generated_transcript(['ko', 'en'])
+            transcript = None
+            for lang in ['ko', 'en']:
+                try:
+                    transcript = transcript_list.find_transcript([lang])
+                    break
+                except Exception:
+                    pass
+            if transcript is None:
+                # 자동생성 자막 시도
+                for t in transcript_list:
+                    transcript = t
+                    break
+            if transcript is None:
+                raise HTTPException(status_code=400, detail="이 영상에는 자막이 없습니다.")
             entries = transcript.fetch()
-            text = " ".join(e.get("text", "") for e in entries).strip()
+            # 버전에 따라 dict 또는 객체
+            text = " ".join(
+                (e.get("text", "") if isinstance(e, dict) else e.text)
+                for e in entries
+            ).strip()
         except (NoTranscriptFound, TranscriptsDisabled):
             raise HTTPException(status_code=400, detail="이 영상에는 자막이 없습니다. 자막이 있는 영상을 사용해주세요.")
         except Exception as e:
