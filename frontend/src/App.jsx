@@ -121,6 +121,7 @@ function AppInner() {
         id: `chapter_${Date.now()}`, folderId: null,
         title: result.title, subject: result.subject,
         source: file.name, summary: result.summary,
+        extractedText: result.extractedText ?? '',
         problems: result.problems,
         skipped: result.skipped ?? [],
         topics: result.topics ?? [],
@@ -205,6 +206,7 @@ function AppInner() {
         {mode === 'study' && (
           <StudyPage
             chapter={currentChapter}
+            chapterId={chapterId}
             onBack={goHome}
             onSwitchToProblem={() => goProblem(chapterId)}
           />

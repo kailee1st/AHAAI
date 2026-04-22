@@ -485,14 +485,28 @@ async def extract_problems(text: str, images_b64: list[str], source_name: str):
 
 async def generate_summary(text: str, images_b64: list[str], title: str) -> str:
     prompt = (
-        f"Write an HTML summary of this document: '{title}'.\n"
-        f"Use <h3>, <p>, <ul><li>, <strong>, <div class='formula-block'>$$...$$</div>.\n"
-        f"Cover all major topics and key formulas. Min 3 sections.\n\n"
-        f"TEXT:\n{text[:30000]}\n\nReturn ONLY the HTML string."
+        f"Create a comprehensive HTML study summary of: '{title}'.\n\n"
+        f"REQUIRED STRUCTURE:\n"
+        f"1. Open with: <div class='sum-header'><h2>📘 {title} — 학습 요약</h2>"
+        f"<p class='sum-source'>원본: {title}</p>"
+        f"<nav class='sum-toc'><strong>📋 목차</strong><ol><!-- anchor links to each h2 section --></ol></nav></div>\n"
+        f"2. Each major topic: <h2 id='sec-N'>EMOJI TopicName</h2>\n"
+        f"3. Sub-topics: <h3>EMOJI SubtopicName</h3>\n"
+        f"4. Use <table> for: comparing concepts, formula lists, structured data — include <thead><tbody>\n"
+        f"5. Sequential steps/proofs: <ol>. Non-ordered lists: <ul>\n"
+        f"6. Key terms: <mark>term</mark>. Important formulas: <div class='formula-block'>$$...$$</div>\n"
+        f"7. Figures/diagrams mentioned in source: <div class='diagram-note'>📊 [Figure N: description]</div>\n\n"
+        f"CONTENT RULES:\n"
+        f"- Include ALL content — must be complete enough to replace the original source\n"
+        f"- Minor rephrasing for smooth flow is OK — zero information loss\n"
+        f"- Math inline: $...$  Display: $$...$$\n"
+        f"- Highlight core insights with <mark>\n\n"
+        f"Return ONLY the HTML string. No markdown fences.\n\n"
+        f"SOURCE:\n{text[:30000]}"
     )
     async with client.messages.stream(
         model="claude-haiku-4-5-20251001",
-        max_tokens=3000,
+        max_tokens=5000,
         messages=[{"role": "user", "content": build_content(prompt, images_b64[:2])}],
     ) as stream:
         msg = await stream.get_final_message()
@@ -542,6 +556,7 @@ async def generate_content(text: str, images_b64: list[str], source_name: str) -
         "problems": problems,
         "skipped": skipped,
         "topics": topics,
+        "extractedText": text[:15000],
     }
 
 
