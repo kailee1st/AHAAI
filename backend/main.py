@@ -292,10 +292,17 @@ async def process_youtube(req: YouTubeRequest):
             raise HTTPException(status_code=400, detail="자막이 너무 짧습니다.")
 
         truncated = text[:MAX_CHARS]
-        result = await generate_content(truncated, [], title)
-        result["extractedText"] = text[:15000]
-        result["youtubeUrl"] = f"https://www.youtube.com/watch?v={video_id}"
-        return result
+        topics = await generate_topics(truncated, title)
+        return {
+            "title": title,
+            "subject": "",
+            "summary": None,
+            "problems": [],
+            "skipped": [],
+            "topics": topics,
+            "extractedText": text[:15000],
+            "youtubeUrl": f"https://www.youtube.com/watch?v={video_id}",
+        }
 
     except HTTPException:
         raise
