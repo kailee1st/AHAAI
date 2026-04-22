@@ -923,13 +923,18 @@ body {
   background: var(--bg); font-size: 0.8rem; color: var(--text); cursor: pointer;
 }
 .sum-tb-size { width: 58px; }
-.sum-tb-color-wrap {
-  display: flex; align-items: center; gap: 2px; cursor: pointer;
-  border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;
+.sum-tb-palette-wrap { position: relative; }
+.sum-tb-palette {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 100;
+  display: flex; gap: 4px; flex-wrap: wrap; width: 136px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px; box-shadow: var(--shadow);
 }
-.sum-tb-color-wrap input[type=color] { width: 18px; height: 18px; border: none; padding: 0; cursor: pointer; background: none; }
-.sum-tb-color-label { font-size: 0.82rem; font-weight: 700; color: var(--text); }
-.sum-tb-hl { background: #fef08a; padding: 0 2px; border-radius: 2px; }
+.sum-tb-swatch {
+  width: 22px; height: 22px; border-radius: 4px; cursor: pointer;
+  transition: transform 0.1s;
+}
+.sum-tb-swatch:hover { transform: scale(1.2); }
 
 /* 편집 가능 요약 본문 */
 .summary-editable {
@@ -955,6 +960,26 @@ body {
 .summary-editable .sum-source { font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px; }
 .summary-editable .sum-toc ol { margin: 6px 0; padding-left: 18px; }
 .summary-editable .sum-toc li { font-size: 0.85rem; margin-bottom: 3px; }
+
+/* ── Blank 모달 ── */
+.blank-modal { width: min(640px, 94vw); }
+.blank-modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+.blank-label { font-size: 0.82rem; font-weight: 700; color: var(--text); }
+.blank-title-input {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 0.9rem; background: var(--bg); color: var(--text);
+  box-sizing: border-box;
+}
+.blank-title-input:focus { outline: none; border-color: var(--accent); }
+.blank-hint-text { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
+.blank-textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 0.88rem; line-height: 1.7;
+  background: var(--bg); color: var(--text); resize: vertical;
+  font-family: var(--sans); box-sizing: border-box;
+}
+.blank-textarea:focus { outline: none; border-color: var(--accent); }
+.blank-char-count { font-size: 0.75rem; color: var(--text-muted); text-align: right; }
 
 /* 둘 다 닫힘 */
 .study-all-closed {

@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
+import BlankModal from '../components/BlankModal';
 
 export default function HomePage({
-  uploading, uploadError, uploadProgress, uploadStage, onUpload,
+  uploading, uploadError, uploadProgress, uploadStage, onUpload, onUploadText,
   chapters, folders,
   onChaptersChange, onFoldersChange,
   onStudy, onProblem,
 }) {
+  const [showBlankModal, setShowBlankModal] = useState(false);
   const [currentFolderId,  setCurrentFolderId]  = useState(null);
   const [newFolderInput,   setNewFolderInput]   = useState(false);
   const [newFolderName,    setNewFolderName]    = useState('');
@@ -132,7 +134,7 @@ export default function HomePage({
               <span className="upload-pdf-hint">클릭하거나 드래그</span>
             </button>
             <div className="upload-other-tiles">
-              <button className="upload-other-tile soon" disabled><span>📝</span><span>Blank</span><span className="tile-soon-badge">준비 중</span></button>
+              <button className="upload-other-tile" onClick={() => setShowBlankModal(true)} disabled={uploading}><span>📝</span><span>Blank</span></button>
               <button className="upload-other-tile soon" disabled><span>🎧</span><span>Audio</span><span className="tile-soon-badge">준비 중</span></button>
               <button className="upload-other-tile soon" disabled><span>▶️</span><span>YouTube</span><span className="tile-soon-badge">준비 중</span></button>
             </div>
@@ -234,6 +236,16 @@ export default function HomePage({
       </div>
 
     </div>
+
+    {showBlankModal && (
+      <BlankModal
+        onClose={() => setShowBlankModal(false)}
+        onSubmit={({ title, text }) => {
+          setShowBlankModal(false);
+          onUploadText({ title, text });
+        }}
+      />
+    )}
   );
 }
 

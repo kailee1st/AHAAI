@@ -88,6 +88,11 @@ class GradeRequest(BaseModel):
     student_answer: str
     expected_solution: str = ""
 
+class ProcessTextRequest(BaseModel):
+    text: str
+    title: str = "직접 작성"
+
+
 class SolveRequest(BaseModel):
     problem: dict
 
@@ -221,6 +226,26 @@ def fix_hint_latex(text: str) -> str:
         inner = m.group(1).strip()
         return f"${inner}$"
     return _LATEX_CMD.sub(wrap, text)
+
+
+@app.post("/api/process-text")
+async def process_text(req: ProcessTextRequest):
+    """텍스트 직접 입력 → 문제 + 요약 생성 (Blank 모드)"""
+    import traceback
+    try:
+        text = req.text.strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="텍스트가 비어 있습니다.")
+        truncated = text[:MAX_CHARS]
+        result = await generate_content(truncated, [], req.title)
+        result["extractedText"] = text[:15000]
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        tb = traceback.format_exc()
+        print(f"[process-text ERROR] {type(e).__name__}: {e}\n{tb}")
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
 
 
 @app.post("/api/hint")

@@ -11,6 +11,32 @@ const KATEX_OPTIONS = {
   throwOnError: false,
 };
 
+const TEXT_COLORS = ['#000000','#374151','#DC2626','#D97706','#16A34A','#2563EB','#7C3AED','#DB2777'];
+const HIGHLIGHT_COLORS = ['transparent','#FEF08A','#BBF7D0','#BFDBFE','#FECACA','#E9D5FF','#FED7AA'];
+
+function ColorPalette({ colors, onSelect, label }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="sum-tb-palette-wrap">
+      <button className="sum-tb-btn" title={label}
+        onMouseDown={e => { e.preventDefault(); setOpen(o => !o); }}>
+        {label}
+      </button>
+      {open && (
+        <div className="sum-tb-palette">
+          {colors.map(c => (
+            <button key={c}
+              className="sum-tb-swatch"
+              style={{ background: c === 'transparent' ? 'white' : c, border: c === 'transparent' ? '2px dashed #ccc' : '2px solid transparent' }}
+              onMouseDown={e => { e.preventDefault(); onSelect(c); setOpen(false); }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── 서식 툴바 ───
 function SummaryToolbar({ editorRef }) {
   function cmd(command, value = null) {
@@ -63,24 +89,17 @@ function SummaryToolbar({ editorRef }) {
         onChange={e => { wrapFontSize(e.target.value); }}
         defaultValue="">
         <option value="" disabled>크기</option>
-        {[10,12,13,14,16,18,20,24,28,32].map(s =>
+        {[10,12,14,16,18,20,24,28,32].map(s =>
           <option key={s} value={s}>{s}</option>
         )}
       </select>
 
       <span className="sum-tb-sep" />
 
-      <label className="sum-tb-color-wrap" title="글자 색">
-        <span className="sum-tb-color-label">A</span>
-        <input type="color" defaultValue="#000000"
-          onChange={e => { cmd('foreColor', e.target.value); }} />
-      </label>
-
-      <label className="sum-tb-color-wrap" title="형광펜">
-        <span className="sum-tb-color-label sum-tb-hl">H</span>
-        <input type="color" defaultValue="#fef08a"
-          onChange={e => { cmd('hiliteColor', e.target.value); }} />
-      </label>
+      <ColorPalette label="A 색" colors={TEXT_COLORS}
+        onSelect={c => cmd('foreColor', c)} />
+      <ColorPalette label="H 형광" colors={HIGHLIGHT_COLORS}
+        onSelect={c => c === 'transparent' ? cmd('hiliteColor', 'transparent') : cmd('hiliteColor', c)} />
 
       <span className="sum-tb-sep" />
 

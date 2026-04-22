@@ -62,6 +62,11 @@ export async function generateSingleProblem({ originalText, source, subject }) {
 }
 
 // 창작문제 생성
+export async function processText({ text, title }) {
+  const { data } = await api.post('/api/process-text', { text, title });
+  return data;
+}
+
 export async function generateCreativeProblems({ summary, topics, topic, count, problemType, subject }) {
   const { data } = await api.post('/api/generate-creative', {
     summary,
