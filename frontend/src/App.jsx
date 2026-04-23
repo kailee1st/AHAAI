@@ -9,6 +9,7 @@ import ProblemReviewPage from './pages/ProblemReviewPage';
 import AccountPage from './pages/AccountPage';
 import { DEMO_CHAPTER, BUILTIN_LIMITS_CHAPTER } from './data/demoChapter';
 import { processFile, processText, processYouTube } from './api/client';
+import { saveChapterToFirestore, deleteChapterFromFirestore, loadChaptersFromFirestore } from './api/firestore';
 import './App.css';
 
 function getChaptersForUser(uid) {
@@ -45,10 +46,28 @@ function AppInner() {
   useEffect(() => {
     const BUILTIN_IDS = new Set(['builtin_limits_ch1', 'demo_suneung_calculus']);
     if (user) {
-      // 로그인 → 내장 챕터 + 유저 챕터 (내장 ID와 충돌하는 건 제거)
-      const userChapters = getChaptersForUser(user.uid).filter(c => !BUILTIN_IDS.has(c.id));
-      setChapters([BUILTIN_LIMITS_CHAPTER, DEMO_CHAPTER, ...userChapters]);
-      setFolders(getFoldersForUser(user.uid));
+      // Firestore에서 로드, localStorage를 캐시/fallback으로 사용
+      async function loadChapters() {
+        const localChapters = getChaptersForUser(user.uid).filter(c => !BUILTIN_IDS.has(c.id));
+        let merged = localChapters;
+        try {
+          const fsChapters = await loadChaptersFromFirestore(user.uid);
+          if (fsChapters.length > 0) {
+            // Firestore가 source of truth, localStorage의 extractedText로 보완
+            merged = fsChapters.map(fc => {
+              const lc = localChapters.find(l => l.id === fc.id);
+              return lc?.extractedText ? { ...fc, extractedText: lc.extractedText } : fc;
+            });
+            // localStorage도 최신화
+            localStorage.setItem(`aha_chapters_${user.uid}`, JSON.stringify(merged));
+          }
+        } catch (e) {
+          console.warn('[Firestore] 로드 실패, localStorage 사용:', e.message);
+        }
+        setChapters([BUILTIN_LIMITS_CHAPTER, DEMO_CHAPTER, ...merged]);
+        setFolders(getFoldersForUser(user.uid));
+      }
+      loadChapters();
     } else {
       // 비로그인 → 내장 챕터만
       setChapters([BUILTIN_LIMITS_CHAPTER, DEMO_CHAPTER]);
@@ -59,12 +78,30 @@ function AppInner() {
     setChapterId(null);
   }, [user?.uid]);
 
-  function saveChapters(list) {
-    if (user) localStorage.setItem(`aha_chapters_${user.uid}`, JSON.stringify(list));
-    setChapters(list);
+  const BUILTIN_IDS = new Set(['builtin_limits_ch1', 'demo_suneung_calculus']);
+
+  function saveChapters(newList) {
+    if (user) {
+      localStorage.setItem(`aha_chapters_${user.uid}`, JSON.stringify(newList));
+      // 삭제된 챕터 → Firestore에서도 제거
+      const newIds = new Set(newList.map(c => c.id));
+      chapters.filter(c => !BUILTIN_IDS.has(c.id) && !newIds.has(c.id)).forEach(c => {
+        deleteChapterFromFirestore(user.uid, c.id).catch(e => console.warn('[Firestore] 삭제 실패', e));
+      });
+      // 추가/변경된 챕터 → Firestore에 저장 (fire-and-forget)
+      newList.filter(c => !BUILTIN_IDS.has(c.id)).forEach(ch => {
+        saveChapterToFirestore(user.uid, ch).catch(e => console.warn('[Firestore] 저장 실패', e));
+      });
+    }
+    setChapters(newList);
   }
   function updateChapter(updatedChapter) {
-    saveChapters(chapters.map(c => c.id === updatedChapter.id ? updatedChapter : c));
+    const newList = chapters.map(c => c.id === updatedChapter.id ? updatedChapter : c);
+    if (user && !BUILTIN_IDS.has(updatedChapter.id)) {
+      localStorage.setItem(`aha_chapters_${user.uid}`, JSON.stringify(newList));
+      saveChapterToFirestore(user.uid, updatedChapter).catch(e => console.warn('[Firestore] 업데이트 실패', e));
+    }
+    setChapters(newList);
   }
   function saveFolders(list) {
     if (user) localStorage.setItem(`aha_folders_${user.uid}`, JSON.stringify(list));

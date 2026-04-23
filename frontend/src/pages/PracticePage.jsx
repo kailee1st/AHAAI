@@ -271,7 +271,7 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
         const next = prev.map((p, i) =>
           i === currentIdx ? { ...p, choices: full.choices, correct: full.correct, solution: full.solution } : p
         );
-        // choices를 챕터 localStorage에 영구 저장
+        // choices를 챕터 localStorage + Firestore에 영구 저장
         try {
           const uid = auth.currentUser?.uid;
           const key = uid ? `aha_chapters_${uid}` : 'aha_chapters';
@@ -280,6 +280,8 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
           if (ci !== -1) {
             chapters[ci].problems = next;
             localStorage.setItem(key, JSON.stringify(chapters));
+            // Firestore 동기화
+            if (onChapterUpdate) onChapterUpdate({ ...chapters[ci] });
           }
         } catch { /* noop */ }
         return next;
