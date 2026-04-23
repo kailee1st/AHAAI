@@ -994,6 +994,44 @@ body {
   width: 100%;
 }
 
+/* ── 문제모드 공부 슬라이드 드로어 ── */
+.study-drawer-overlay {
+  position: fixed; inset: 0; z-index: 299;
+  background: rgba(0,0,0,0.25);
+}
+.study-drawer {
+  position: fixed; top: 0; right: 0;
+  width: 420px; max-width: 92vw; height: 100vh;
+  background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: -6px 0 24px rgba(0,0,0,0.12);
+  z-index: 300;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.study-drawer.open { transform: translateX(0); }
+.study-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  font-weight: 600; font-size: 0.95rem; flex-shrink: 0;
+}
+.study-drawer-body {
+  flex: 1; overflow: hidden; display: flex; flex-direction: column;
+}
+
+/* ── StudyContent 공유 컴포넌트 ── */
+.study-content { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.study-content-tabs {
+  display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.study-content-tab {
+  padding: 8px 16px; font-size: 0.85rem; border: none; background: none;
+  cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.study-content-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.study-content-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
 /* 레거시 호환 */
 .study-page { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
 .study-panels { display: grid; gap: 16px; align-items: start; }

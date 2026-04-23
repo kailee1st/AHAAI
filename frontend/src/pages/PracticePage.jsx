@@ -8,6 +8,7 @@ import DOMPurify from 'dompurify';
 import { BUILTIN_PROBLEMS, RESERVE_PROBLEMS, isCorrect } from '../data/builtinProblems';
 import { getHint, analyzeWrongAnswer, gradeAnswer, solveProblem, generateSingleProblem } from '../api/client';
 import AddProblemModal from '../components/AddProblemModal';
+import StudyContent from '../components/StudyContent';
 
 const KATEX_OPTIONS = {
   delimiters: [
@@ -224,7 +225,8 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
   const [solutionLoading, setSolutionLoading] = useState(false);
   const [solutionError, setSolutionError] = useState('');
   const [choicesGenerating, setChoicesGenerating] = useState(false);
-  const [inputError, setInputError] = useState('');  // 수치 입력 오류 메시지
+  const [inputError, setInputError] = useState('');
+  const [showStudyDrawer, setShowStudyDrawer] = useState(false);
 
   const inputRef    = useRef(null);
   // 마운트 여부 추적 — 초기 렌더에서 pState를 localStorage에 덮어쓰지 않도록
@@ -609,13 +611,31 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
         )}
         <button className="mode-tab mode-tab-active">✏️ 문제</button>
         <span className="chapter-label">{chapterTitle}</span>
-        {/* 설정 버튼 */}
-        <button
-          className="btn-settings"
-          onClick={() => setShowSettings(v => !v)}
-          title="문제 설정"
-        >⚙️</button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {chapter && (
+            <button
+              className={`panel-toggle-btn ${showStudyDrawer ? 'ptb-active' : ''}`}
+              onClick={() => setShowStudyDrawer(v => !v)}
+              title="공부 패널 열기"
+            >📖 공부</button>
+          )}
+          <button className="btn-settings" onClick={() => setShowSettings(v => !v)} title="문제 설정">⚙️</button>
+        </div>
       </nav>
+
+      {/* ── 공부 슬라이드 드로어 ── */}
+      {showStudyDrawer && (
+        <div className="study-drawer-overlay" onClick={() => setShowStudyDrawer(false)} />
+      )}
+      <div className={`study-drawer ${showStudyDrawer ? 'open' : ''}`}>
+        <div className="study-drawer-header">
+          <span>📖 공부 패널</span>
+          <button className="panel-close-btn" onClick={() => setShowStudyDrawer(false)}>✕</button>
+        </div>
+        <div className="study-drawer-body">
+          <StudyContent chapter={chapter} chapterId={chapterId} />
+        </div>
+      </div>
 
       {/* 설정 패널 */}
       {showSettings && (

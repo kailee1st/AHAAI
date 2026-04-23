@@ -1,178 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import DOMPurify from 'dompurify';
-import renderMathInElement from 'katex/contrib/auto-render';
-import 'katex/dist/katex.min.css';
+import StudyContent from '../components/StudyContent';
 
-const KATEX_OPTIONS = {
-  delimiters: [
-    { left: '$$', right: '$$', display: true },
-    { left: '$',  right: '$',  display: false },
-  ],
-  throwOnError: false,
-};
-
-const TEXT_COLORS = ['#000000','#374151','#DC2626','#D97706','#16A34A','#2563EB','#7C3AED','#DB2777'];
-const HIGHLIGHT_COLORS = ['transparent','#FEF08A','#BBF7D0','#BFDBFE','#FECACA','#E9D5FF','#FED7AA'];
-
-function ColorPalette({ colors, onSelect, label }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="sum-tb-palette-wrap">
-      <button className="sum-tb-btn" title={label}
-        onMouseDown={e => { e.preventDefault(); setOpen(o => !o); }}>
-        {label}
-      </button>
-      {open && (
-        <div className="sum-tb-palette">
-          {colors.map(c => (
-            <button key={c}
-              className="sum-tb-swatch"
-              style={{ background: c === 'transparent' ? 'white' : c, border: c === 'transparent' ? '2px dashed #ccc' : '2px solid transparent' }}
-              onMouseDown={e => { e.preventDefault(); onSelect(c); setOpen(false); }}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── 서식 툴바 ───
-function SummaryToolbar({ editorRef }) {
-  function cmd(command, value = null) {
-    editorRef.current?.focus();
-    document.execCommand(command, false, value);
-  }
-  function wrapFontSize(size) {
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return;
-    const range = sel.getRangeAt(0);
-    if (range.collapsed) return;
-    const span = document.createElement('span');
-    span.style.fontSize = size + 'px';
-    try { range.surroundContents(span); } catch { /* 크로스노드 선택 무시 */ }
-  }
-
-  return (
-    <div className="sum-toolbar">
-      <button className="sum-tb-btn" title="굵게 (Ctrl+B)"
-        onMouseDown={e => { e.preventDefault(); cmd('bold'); }}>
-        <strong>B</strong>
-      </button>
-      <button className="sum-tb-btn" title="기울임 (Ctrl+I)"
-        style={{ fontStyle: 'italic' }}
-        onMouseDown={e => { e.preventDefault(); cmd('italic'); }}>
-        I
-      </button>
-      <button className="sum-tb-btn" title="밑줄 (Ctrl+U)"
-        style={{ textDecoration: 'underline' }}
-        onMouseDown={e => { e.preventDefault(); cmd('underline'); }}>
-        U
-      </button>
-      <button className="sum-tb-btn" title="취소선"
-        style={{ textDecoration: 'line-through' }}
-        onMouseDown={e => { e.preventDefault(); cmd('strikeThrough'); }}>
-        S
-      </button>
-
-      <span className="sum-tb-sep" />
-
-      <select className="sum-tb-select" title="글꼴"
-        onChange={e => { cmd('fontName', e.target.value); }}
-        defaultValue="inherit">
-        <option value="inherit">기본 글꼴</option>
-        <option value="Georgia, serif">Serif</option>
-        <option value="monospace">Mono</option>
-      </select>
-
-      <select className="sum-tb-select sum-tb-size" title="글자 크기"
-        onChange={e => { wrapFontSize(e.target.value); }}
-        defaultValue="">
-        <option value="" disabled>크기</option>
-        {[10,12,14,16,18,20,24,28,32].map(s =>
-          <option key={s} value={s}>{s}</option>
-        )}
-      </select>
-
-      <span className="sum-tb-sep" />
-
-      <ColorPalette label="A 색" colors={TEXT_COLORS}
-        onSelect={c => cmd('foreColor', c)} />
-      <ColorPalette label="H 형광" colors={HIGHLIGHT_COLORS}
-        onSelect={c => c === 'transparent' ? cmd('hiliteColor', 'transparent') : cmd('hiliteColor', c)} />
-
-      <span className="sum-tb-sep" />
-
-      <button className="sum-tb-btn" title="글머리 기호"
-        onMouseDown={e => { e.preventDefault(); cmd('insertUnorderedList'); }}>
-        • 목록
-      </button>
-      <button className="sum-tb-btn" title="번호 목록"
-        onMouseDown={e => { e.preventDefault(); cmd('insertOrderedList'); }}>
-        1. 목록
-      </button>
-
-      <span className="sum-tb-sep" />
-
-      <button className="sum-tb-btn" title="실행 취소"
-        onMouseDown={e => { e.preventDefault(); cmd('undo'); }}>
-        ↩
-      </button>
-      <button className="sum-tb-btn" title="다시 실행"
-        onMouseDown={e => { e.preventDefault(); cmd('redo'); }}>
-        ↪
-      </button>
-    </div>
-  );
-}
-
-// ─── 요약 패널 (편집 가능) ───
-function SummaryPanel({ html, chapterId }) {
-  const editorRef  = useRef(null);
-  const storageKey = `study_edited_${chapterId ?? 'builtin'}`;
-
-  useEffect(() => {
-    if (!editorRef.current) return;
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      editorRef.current.innerHTML = saved;
-    } else {
-      editorRef.current.innerHTML = DOMPurify.sanitize(html || '');
-      renderMathInElement(editorRef.current, KATEX_OPTIONS);
-    }
-  }, [html, storageKey]);
-
-  function handleBlur() {
-    if (!editorRef.current) return;
-    try { localStorage.setItem(storageKey, editorRef.current.innerHTML); } catch { /* noop */ }
-  }
-
-  return (
-    <div className="summary-panel-wrap">
-      <SummaryToolbar editorRef={editorRef} />
-      <div
-        ref={editorRef}
-        className="summary-editable"
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={handleBlur}
-        spellCheck={false}
-      />
-    </div>
-  );
-}
-
-// ─── 메인 ───
 export default function StudyPage({ chapter, chapterId, onBack, onSwitchToProblem }) {
   const title         = chapter?.title ?? '극한 §1.4–1.6';
-  const summary       = chapter?.summary ?? null;
   const extractedText = chapter?.extractedText ?? null;
   const pdfUrl        = chapter?.pdfUrl ?? null;
   const source        = chapter?.source ?? null;
-  const id            = chapterId ?? chapter?.id ?? 'builtin';
 
-  // leftPct: 0=요약만, 100=원본만, 50=반반
-  const [leftPct, setLeftPct] = useState(summary ? 45 : 100);
+  // leftPct: 0=공부콘텐츠만, 100=원본만, 50=반반
+  const [leftPct, setLeftPct] = useState(chapter?.summary ? 45 : 100);
   const containerRef = useRef(null);
   const dragging     = useRef(false);
 
@@ -223,16 +59,8 @@ export default function StudyPage({ chapter, chapterId, onBack, onSwitchToProble
           <span className="chapter-label">{title}</span>
         </div>
         <div className="study-nav-right">
-          <button
-            className={`panel-toggle-btn ${showOrig ? 'ptb-active' : ''}`}
-            onClick={toggleOrig}
-            title="원본 보기/숨기기"
-          >📄 원본</button>
-          <button
-            className={`panel-toggle-btn ${showSum ? 'ptb-active' : ''}`}
-            onClick={toggleSum}
-            title="요약 보기/숨기기"
-          >✦ 요약</button>
+          <button className={`panel-toggle-btn ${showOrig ? 'ptb-active' : ''}`} onClick={toggleOrig} title="원본 보기/숨기기">📄 원본</button>
+          <button className={`panel-toggle-btn ${showSum  ? 'ptb-active' : ''}`} onClick={toggleSum}  title="공부 패널 보기/숨기기">📖 공부</button>
         </div>
       </nav>
 
@@ -241,31 +69,21 @@ export default function StudyPage({ chapter, chapterId, onBack, onSwitchToProble
 
         {/* 원본 */}
         {showOrig && (
-          <div
-            className="study-panel-v2"
-            style={{ width: !showSum ? '100%' : `calc(${leftPct}% - 3px)` }}
-          >
+          <div className="study-panel-v2" style={{ width: !showSum ? '100%' : `calc(${leftPct}% - 3px)` }}>
             <div className="study-panel-header">
               <span>📄 원본 파일</span>
               <button className="panel-close-btn" onClick={() => setLeftPct(0)}>✕</button>
             </div>
             <div className="study-panel-body study-panel-body-pdf">
               {pdfUrl ? (
-                <iframe
-                  className="pdf-iframe"
-                  src={pdfUrl}
-                  title="PDF 미리보기"
-                />
+                <iframe className="pdf-iframe" src={pdfUrl} title="PDF 미리보기" />
               ) : extractedText ? (
                 <pre className="orig-text">{extractedText}</pre>
               ) : (
                 <div className="original-placeholder">
                   <div className="orig-icon">📎</div>
                   <p className="orig-filename">{source ?? 'Stewart Calculus §1.4–1.6'}</p>
-                  <p className="orig-note">
-                    원본 텍스트가 저장되지 않았습니다.<br />
-                    PDF를 다시 업로드하면 원본을 볼 수 있습니다.
-                  </p>
+                  <p className="orig-note">원본 텍스트가 저장되지 않았습니다.<br />PDF를 다시 업로드하면 원본을 볼 수 있습니다.</p>
                 </div>
               )}
             </div>
@@ -277,25 +95,14 @@ export default function StudyPage({ chapter, chapterId, onBack, onSwitchToProble
           <div className="study-divider-v2" onMouseDown={onDividerMouseDown} />
         )}
 
-        {/* 요약 */}
+        {/* 공부 콘텐츠 */}
         {showSum && (
-          <div
-            className="study-panel-v2"
-            style={{ width: !showOrig ? '100%' : `calc(${100 - leftPct}% - 3px)` }}
-          >
+          <div className="study-panel-v2" style={{ width: !showOrig ? '100%' : `calc(${100 - leftPct}% - 3px)` }}>
             <div className="study-panel-header">
-              <span>✦ AI 요약</span>
+              <span>📖 공부</span>
               <button className="panel-close-btn" onClick={() => setLeftPct(100)}>✕</button>
             </div>
-            {summary ? (
-              <SummaryPanel html={summary} chapterId={id} />
-            ) : (
-              <div className="study-panel-body">
-                <div className="original-placeholder">
-                  <p className="orig-note">이 챕터에는 AI 요약이 없습니다.<br />PDF를 업로드하면 자동 생성됩니다.</p>
-                </div>
-              </div>
-            )}
+            <StudyContent chapter={chapter} chapterId={chapterId} />
           </div>
         )}
 
