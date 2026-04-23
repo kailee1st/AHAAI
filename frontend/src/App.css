@@ -1111,6 +1111,19 @@ body {
 }
 .fc-done-msg { text-align: center; font-size: 0.9rem; color: var(--text-muted); flex-shrink: 0; }
 
+/* ── 메모 ── */
+.memo-wrap { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.memo-textarea {
+  flex: 1; resize: none; border: none; outline: none;
+  padding: 16px 20px; font-size: 0.97rem; line-height: 1.75;
+  color: var(--text); background: var(--surface); font-family: inherit;
+}
+.memo-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 16px; border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.memo-char-count { font-size: 0.78rem; color: var(--text-muted); }
+
 /* 레거시 호환 */
 .study-page { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
 .study-panels { display: grid; gap: 16px; align-items: start; }

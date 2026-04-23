@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import FlashcardPanel from './FlashcardPanel';
+import MemoPanel from './MemoPanel';
 import renderMathInElement from 'katex/contrib/auto-render';
 import 'katex/dist/katex.min.css';
 
@@ -112,8 +113,8 @@ function SummaryPanel({ html, chapterId }) {
 const TABS = [
   { id: 'summary',   label: '✦ 요약' },
   { id: 'flashcard', label: '🃏 플래시카드' },
+  { id: 'memo',      label: '📝 메모' },
   // { id: 'mindmap', label: '🗺 마인드맵' },
-  // { id: 'memo',    label: '📝 메모' },
 ];
 
 export default function StudyContent({ chapter, chapterId }) {
@@ -146,6 +147,9 @@ export default function StudyContent({ chapter, chapterId }) {
         )}
         {activeTab === 'flashcard' && (
           <FlashcardPanel chapter={chapter} chapterId={id} />
+        )}
+        {activeTab === 'memo' && (
+          <MemoPanel chapterId={id} />
         )}
       </div>
     </div>
