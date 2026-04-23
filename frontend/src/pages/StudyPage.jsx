@@ -167,6 +167,7 @@ export default function StudyPage({ chapter, chapterId, onBack, onSwitchToProble
   const title         = chapter?.title ?? '극한 §1.4–1.6';
   const summary       = chapter?.summary ?? null;
   const extractedText = chapter?.extractedText ?? null;
+  const pdfUrl        = chapter?.pdfUrl ?? null;
   const source        = chapter?.source ?? null;
   const id            = chapterId ?? chapter?.id ?? 'builtin';
 
@@ -248,8 +249,14 @@ export default function StudyPage({ chapter, chapterId, onBack, onSwitchToProble
               <span>📄 원본 파일</span>
               <button className="panel-close-btn" onClick={() => setLeftPct(0)}>✕</button>
             </div>
-            <div className="study-panel-body">
-              {extractedText ? (
+            <div className="study-panel-body study-panel-body-pdf">
+              {pdfUrl ? (
+                <iframe
+                  className="pdf-iframe"
+                  src={pdfUrl}
+                  title="PDF 미리보기"
+                />
+              ) : extractedText ? (
                 <pre className="orig-text">{extractedText}</pre>
               ) : (
                 <div className="original-placeholder">

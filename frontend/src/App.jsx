@@ -10,6 +10,7 @@ import AccountPage from './pages/AccountPage';
 import { DEMO_CHAPTER, BUILTIN_LIMITS_CHAPTER } from './data/demoChapter';
 import { processFile, processText, processYouTube } from './api/client';
 import { saveChapterToFirestore, deleteChapterFromFirestore, loadChaptersFromFirestore } from './api/firestore';
+import { uploadPdfToStorage, deletePdfFromStorage } from './api/storage';
 import './App.css';
 
 function getChaptersForUser(uid) {
@@ -83,10 +84,11 @@ function AppInner() {
   function saveChapters(newList) {
     if (user) {
       localStorage.setItem(`aha_chapters_${user.uid}`, JSON.stringify(newList));
-      // 삭제된 챕터 → Firestore에서도 제거
+      // 삭제된 챕터 → Firestore + Storage에서도 제거
       const newIds = new Set(newList.map(c => c.id));
       chapters.filter(c => !BUILTIN_IDS.has(c.id) && !newIds.has(c.id)).forEach(c => {
         deleteChapterFromFirestore(user.uid, c.id).catch(e => console.warn('[Firestore] 삭제 실패', e));
+        if (c.pdfUrl) deletePdfFromStorage(user.uid, c.id).catch(() => {});
       });
       // 추가/변경된 챕터 → Firestore에 저장 (fire-and-forget)
       newList.filter(c => !BUILTIN_IDS.has(c.id)).forEach(ch => {
@@ -217,17 +219,19 @@ function AppInner() {
       const result = await processFile(file);
       clearInterval(progressTimer.current);
       setUploadProgress(100); setUploadStage('완료!');
-      console.log('[upload result]', {
-        problems: result.problems?.length,
-        formats: result.problems?.map(p => p.format),
-        skipped: result.skipped?.length,
-      });
       await incrementUploadCount();
+      const chapterId = `chapter_${Date.now()}`;
+      // PDF를 Firebase Storage에도 저장 (미리보기용)
+      let pdfUrl = null;
+      try {
+        pdfUrl = await uploadPdfToStorage(user.uid, chapterId, file);
+      } catch (e) { console.warn('[Storage] PDF 업로드 실패:', e.message); }
       const ch = {
-        id: `chapter_${Date.now()}`, folderId: null,
+        id: chapterId, folderId: null,
         title: result.title, subject: result.subject,
         source: file.name, summary: result.summary,
         extractedText: result.extractedText ?? '',
+        pdfUrl,
         problems: result.problems,
         skipped: result.skipped ?? [],
         topics: result.topics ?? [],
