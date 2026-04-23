@@ -101,6 +101,12 @@ class SolveRequest(BaseModel):
     problem: dict
 
 
+class FlashcardRequest(BaseModel):
+    summary: str
+    title: str = ""
+    count: int = 12
+
+
 class GenerateCreativeRequest(BaseModel):
     summary: str
     topics: list[str] = []
@@ -672,6 +678,45 @@ async def generate_content(text: str, images_b64: list[str], source_name: str) -
         "topics": topics,
         "extractedText": text[:15000],
     }
+
+
+# ─── 플래시카드 생성 ───
+
+@app.post("/api/generate-flashcards")
+async def generate_flashcards(req: FlashcardRequest):
+    count = max(5, min(20, req.count))
+    prompt = (
+        f"Create {count} flashcards for studying: '{req.title}'.\n\n"
+        f"Rules:\n"
+        f"- Front: a concise question or term (1 line max)\n"
+        f"- Back: a clear answer or definition (2-4 lines max)\n"
+        f"- Cover the most important concepts, formulas, and definitions\n"
+        f"- Math notation: use $...$ for inline, $$...$$ for display\n"
+        f"- Write in Korean. Keep backs concise but complete.\n"
+        f"- Do NOT repeat very similar cards\n\n"
+        f"Return ONLY a JSON array (no markdown):\n"
+        f'[{{"front": "개념 또는 질문", "back": "정의 또는 답변"}}]\n\n'
+        f"CONTENT:\n{req.summary[:8000]}"
+    )
+    response = await client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=3000,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = response.content[0].text.strip()
+    raw = re.sub(r"^```json\s*\n?", "", raw)
+    raw = re.sub(r"\n?```\s*$", "", raw)
+    match = re.search(r'\[[\s\S]*\]', raw)
+    if not match:
+        raise HTTPException(status_code=500, detail="플래시카드 생성 실패")
+    try:
+        cards = json.loads(match.group())
+    except Exception:
+        from json_repair import repair_json
+        cards = repair_json(match.group(), return_objects=True)
+    if not isinstance(cards, list) or not cards:
+        raise HTTPException(status_code=500, detail="플래시카드 생성 실패")
+    return [{"front": c.get("front",""), "back": c.get("back","")} for c in cards if c.get("front")]
 
 
 # ─── 창작문제 생성 ───

@@ -1033,6 +1033,84 @@ body {
 .study-content-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
 .study-content-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
+/* ── 플래시카드 ── */
+.fc-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 40px 24px; text-align: center; flex: 1;
+}
+.fc-wrap {
+  display: flex; flex-direction: column; height: 100%; padding: 14px 16px; gap: 10px; overflow: hidden;
+}
+.fc-topbar {
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+.fc-progress { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
+.fc-topbar-actions { display: flex; align-items: center; gap: 6px; }
+.fc-known-badge { font-size: 0.78rem; color: #16a34a; font-weight: 600; background: #dcfce7; padding: 2px 8px; border-radius: 10px; }
+.fc-btn-sm {
+  padding: 3px 8px; font-size: 0.78rem; border: 1px solid var(--border);
+  border-radius: 6px; background: transparent; cursor: pointer; color: var(--text-muted);
+  white-space: nowrap;
+}
+.fc-btn-sm:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+.fc-btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+.fc-progressbar {
+  height: 4px; background: var(--border); border-radius: 2px; flex-shrink: 0;
+}
+.fc-progressbar-fill {
+  height: 100%; background: var(--primary); border-radius: 2px;
+  transition: width 0.3s ease;
+}
+/* 카드 3D 뒤집기 */
+.fc-card-scene {
+  flex: 1; perspective: 1000px; cursor: pointer; min-height: 0;
+}
+.fc-card {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d; transition: transform 0.4s ease;
+}
+.fc-card.flipped { transform: rotateY(180deg); }
+.fc-card-front, .fc-card-back {
+  position: absolute; inset: 0;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 20px; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--surface); box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  gap: 10px; text-align: center; overflow-y: auto;
+}
+.fc-card-back { transform: rotateY(180deg); background: #f8f5ff; border-color: var(--primary-light); }
+.fc-card.fc-card-known .fc-card-front { border-color: #16a34a; background: #f0fdf4; }
+.fc-card-label {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-muted); flex-shrink: 0;
+}
+.fc-card-text { font-size: 1.05rem; line-height: 1.6; color: var(--text); }
+.fc-tap-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: auto; flex-shrink: 0; }
+/* 액션 버튼 */
+.fc-actions {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; flex-shrink: 0;
+}
+.fc-btn-prev, .fc-btn-next {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
+  background: transparent; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+}
+.fc-btn-prev:disabled, .fc-btn-next:disabled { opacity: 0.3; cursor: not-allowed; }
+.fc-btn-flip {
+  padding: 8px 24px; border-radius: 20px; border: none;
+  background: var(--primary); color: white; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+}
+.fc-btn-known {
+  padding: 8px 18px; border-radius: 20px; border: none;
+  background: #16a34a; color: white; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+}
+.fc-btn-unknown {
+  padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border);
+  background: transparent; color: var(--text); font-weight: 500; cursor: pointer; font-size: 0.85rem;
+}
+.fc-done-msg { text-align: center; font-size: 0.9rem; color: var(--text-muted); flex-shrink: 0; }
+
 /* 레거시 호환 */
 .study-page { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
 .study-panels { display: grid; gap: 16px; align-items: start; }

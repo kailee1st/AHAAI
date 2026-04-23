@@ -83,3 +83,8 @@ export async function generateCreativeProblems({ summary, topics, selectedTopics
   });
   return data;
 }
+
+export async function generateFlashcards({ summary, title, count = 12 }) {
+  const { data } = await api.post('/api/generate-flashcards', { summary, title, count });
+  return data;
+}

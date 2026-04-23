@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import DOMPurify from 'dompurify';
+import FlashcardPanel from './FlashcardPanel';
 import renderMathInElement from 'katex/contrib/auto-render';
 import 'katex/dist/katex.min.css';
 
@@ -109,10 +110,10 @@ function SummaryPanel({ html, chapterId }) {
 
 // ─── 탭 목록 — 새 기능 추가 시 여기에만 추가 ───
 const TABS = [
-  { id: 'summary', label: '✦ 요약' },
-  // { id: 'mindmap',   label: '🗺 마인드맵' },  // 추후 활성화
-  // { id: 'flashcard', label: '🃏 플래시카드' },
-  // { id: 'memo',      label: '📝 메모' },
+  { id: 'summary',   label: '✦ 요약' },
+  { id: 'flashcard', label: '🃏 플래시카드' },
+  // { id: 'mindmap', label: '🗺 마인드맵' },
+  // { id: 'memo',    label: '📝 메모' },
 ];
 
 export default function StudyContent({ chapter, chapterId }) {
@@ -142,6 +143,9 @@ export default function StudyContent({ chapter, chapterId }) {
             : <div className="original-placeholder">
                 <p className="orig-note">이 챕터에는 AI 요약이 없습니다.<br />PDF를 업로드하면 자동 생성됩니다.</p>
               </div>
+        )}
+        {activeTab === 'flashcard' && (
+          <FlashcardPanel chapter={chapter} chapterId={id} />
         )}
       </div>
     </div>
