@@ -104,7 +104,8 @@ class SolveRequest(BaseModel):
 class GenerateCreativeRequest(BaseModel):
     summary: str
     topics: list[str] = []
-    topic: str
+    topic: str = ""              # 단일 토픽 (하위 호환)
+    selected_topics: list[str] = []  # 다중 토픽 선택 시 사용
     count: int = 3
     problem_type: str = "4지선다"  # '4지선다' | '참/거짓' | '빈칸채우기' | '단답형'
     subject: str = ""
@@ -219,9 +220,9 @@ async def process_file(file: UploadFile = File(...)):
 
 
 _LATEX_CMD = re.compile(
-    r'(?<!\$)'                          # $ 앞에 없을 때
-    r'(\\(?:frac|sqrt|sum|int|lim|infty|alpha|beta|gamma|delta|epsilon|theta|lambda|mu|pi|sigma|phi|omega|text|mathbb|vec|hat|bar|cdot|times|leq|geq|neq|in|subset|forall|exists)\b[^$\n]*?)'
-    r'(?!\$)',                          # $ 뒤에 없을 때
+    r'(?<!\$)'
+    r'(\\(?:frac|sqrt|sum|int|lim|infty|nabla|partial|alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega|text|mathbb|mathbf|mathrm|mathcal|vec|hat|bar|tilde|dot|ddot|cdot|times|div|leq|geq|neq|approx|equiv|in|notin|subset|subseteq|supset|supseteq|forall|exists|left|right|langle|rangle|vert|Vert|norm|boldsymbol|operatorname)\b[^$\n]*?)'
+    r'(?!\$)',
 )
 
 def fix_hint_latex(text: str) -> str:
@@ -699,17 +700,30 @@ async def generate_creative(req: GenerateCreativeRequest):
         ),
     }.get(req.problem_type, "Short answer. choices: null.")
 
-    # 커스텀 토픽 관련성 체크 지시
-    custom_note = ""
-    if req.topics and req.topic not in req.topics:
-        custom_note = (
-            f"The topic '{req.topic}' was user-specified. "
-            f"If it is completely unrelated to the content, respond with JSON: "
-            f'[{{"error": "unrelated"}}] instead of problems.\n'
+    # 유효 토픽 결정: selected_topics 우선, 없으면 단일 topic 폴백
+    active_topics = req.selected_topics if req.selected_topics else ([req.topic] if req.topic else [])
+
+    # 토픽 지시문 생성
+    if len(active_topics) > 1:
+        topic_line = (
+            f"Topics to cover (distribute the {count} problem(s) randomly across these topics — "
+            f"each problem belongs to exactly one): {', '.join(active_topics)}\n"
         )
+        custom_note = ""
+    else:
+        single = active_topics[0] if active_topics else ""
+        topic_line = f"Topic: '{single}'\n"
+        custom_note = ""
+        if req.topics and single not in req.topics:
+            custom_note = (
+                f"The topic '{single}' was user-specified. "
+                f"If it is completely unrelated to the content, respond with JSON: "
+                f'[{{"error": "unrelated"}}] instead of problems.\n'
+            )
 
     prompt = (
-        f"Create {count} quiz problem(s) on the topic: '{req.topic}'\n"
+        f"Create {count} quiz problem(s).\n"
+        f"{topic_line}"
         f"Subject: {req.subject}\n"
         f"Problem format: {req.problem_type}\n"
         f"Difficulty: medium\n"

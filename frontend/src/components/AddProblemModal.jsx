@@ -7,7 +7,7 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
   const noChapters = allChapters.length === 0;
 
   const [selectedChapterId, setSelectedChapterId] = useState(defaultChapterId ?? allChapters[0]?.id ?? '');
-  const [selectedTopic,     setSelectedTopic]     = useState('');
+  const [selectedTopics,    setSelectedTopics]    = useState(new Set());  // 다중 선택
   const [customTopic,       setCustomTopic]       = useState('');
   const [useCustom,         setUseCustom]         = useState(false);
   const [count,             setCount]             = useState(3);
@@ -20,14 +20,27 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
 
   function handleChapterChange(id) {
     setSelectedChapterId(id);
-    setSelectedTopic('');
+    setSelectedTopics(new Set());
     setUseCustom(false);
     setCustomTopic('');
     setError('');
   }
 
-  const effectiveTopic = useCustom ? customTopic.trim() : selectedTopic;
-  const canGenerate = !noChapters && selectedChapter && effectiveTopic && !generating;
+  function toggleTopic(t) {
+    setUseCustom(false);
+    setSelectedTopics(prev => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t); else next.add(t);
+      return next;
+    });
+    setError('');
+  }
+
+  const effectiveTopics = useCustom
+    ? (customTopic.trim() ? [customTopic.trim()] : [])
+    : [...selectedTopics];
+
+  const canGenerate = !noChapters && selectedChapter && effectiveTopics.length > 0 && !generating;
 
   async function handleGenerate() {
     if (!canGenerate) return;
@@ -35,12 +48,12 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
     setError('');
     try {
       const problems = await generateCreativeProblems({
-        summary:     selectedChapter.summary ?? '',
-        topics:      topics,
-        topic:       effectiveTopic,
-        count:       count,
-        problemType: problemType,
-        subject:     selectedChapter.subject ?? '',
+        summary:        selectedChapter.summary ?? '',
+        topics:         topics,
+        selectedTopics: effectiveTopics,
+        count:          count,
+        problemType:    problemType,
+        subject:        selectedChapter.subject ?? '',
       });
       onGenerated(problems, selectedChapter);
     } catch (e) {
@@ -50,6 +63,12 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
       setGenerating(false);
     }
   }
+
+  const topicLabel = effectiveTopics.length === 0
+    ? ''
+    : effectiveTopics.length === 1
+      ? effectiveTopics[0]
+      : `${effectiveTopics.length}개 토픽 선택됨`;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -82,9 +101,14 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
             )}
           </div>
 
-          {/* Step 2: 토픽 선택 */}
+          {/* Step 2: 토픽 선택 (다중) */}
           <div className={`add-problem-step ${noChapters || !selectedChapter ? 'add-problem-step-disabled' : ''}`}>
-            <label className="add-problem-label">2. 토픽 선택</label>
+            <label className="add-problem-label">
+              2. 토픽 선택
+              {effectiveTopics.length > 0 && (
+                <span className="add-problem-topic-count"> — {topicLabel}</span>
+              )}
+            </label>
             {!noChapters && selectedChapter && topics.length === 0 && (
               <p className="add-problem-empty-sub">저장된 토픽이 없습니다. 직접 입력하세요.</p>
             )}
@@ -93,20 +117,20 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
                 {topics.map(t => (
                   <button
                     key={t}
-                    className={`add-problem-topic-btn ${!useCustom && selectedTopic === t ? 'selected' : ''}`}
-                    onClick={() => { setSelectedTopic(t); setUseCustom(false); setError(''); }}
+                    className={`add-problem-topic-btn ${!useCustom && selectedTopics.has(t) ? 'selected' : ''}`}
+                    onClick={() => toggleTopic(t)}
                   >
                     {t}
                   </button>
                 ))}
               </div>
             )}
-            {/* 커스텀 토픽 — 자료 선택 전이면 비활성 */}
+            {/* 커스텀 토픽 */}
             <div className="add-problem-custom-row">
               <button
                 className={`add-problem-topic-btn custom-btn ${useCustom ? 'selected' : ''}`}
                 disabled={noChapters || !selectedChapter}
-                onClick={() => { setUseCustom(true); setSelectedTopic(''); }}
+                onClick={() => { setUseCustom(true); setSelectedTopics(new Set()); }}
               >
                 + 직접 입력
               </button>
@@ -127,7 +151,7 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
           </div>
 
           {/* Step 3: 개수 + 유형 */}
-          <div className={`add-problem-step ${noChapters || !effectiveTopic ? 'add-problem-step-disabled' : ''}`}>
+          <div className={`add-problem-step ${noChapters || effectiveTopics.length === 0 ? 'add-problem-step-disabled' : ''}`}>
             <label className="add-problem-label">3. 개수 및 형태</label>
             <div className="add-problem-config-row">
               {/* 개수 */}
@@ -138,7 +162,7 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
                     <button
                       key={n}
                       className={`count-btn ${count === n ? 'selected' : ''}`}
-                      disabled={noChapters || !effectiveTopic}
+                      disabled={noChapters || effectiveTopics.length === 0}
                       onClick={() => setCount(n)}
                     >{n}</button>
                   ))}
@@ -152,14 +176,14 @@ export default function AddProblemModal({ allChapters, defaultChapterId, onGener
                     <button
                       key={t}
                       className={`type-btn ${problemType === t ? 'selected' : ''}`}
-                      disabled={noChapters || !effectiveTopic}
+                      disabled={noChapters || effectiveTopics.length === 0}
                       onClick={() => setProblemType(t)}
                     >{t}</button>
                   ))}
                 </div>
               </div>
             </div>
-            {(noChapters || !effectiveTopic) && (
+            {(noChapters || effectiveTopics.length === 0) && (
               <p className="add-problem-step-hint">토픽을 먼저 선택하세요</p>
             )}
           </div>

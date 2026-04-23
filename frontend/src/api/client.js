@@ -72,11 +72,11 @@ export async function processText({ text, title }) {
   return data;
 }
 
-export async function generateCreativeProblems({ summary, topics, topic, count, problemType, subject }) {
+export async function generateCreativeProblems({ summary, topics, selectedTopics, count, problemType, subject }) {
   const { data } = await api.post('/api/generate-creative', {
     summary,
     topics,
-    topic,
+    selected_topics: selectedTopics ?? [],
     count,
     problem_type: problemType,
     subject,

@@ -11,8 +11,10 @@ import AddProblemModal from '../components/AddProblemModal';
 
 const KATEX_OPTIONS = {
   delimiters: [
-    { left: '$$', right: '$$', display: true },
-    { left: '$',  right: '$',  display: false },
+    { left: '$$',   right: '$$',   display: true  },
+    { left: '\\[',  right: '\\]',  display: true  },
+    { left: '$',    right: '$',    display: false },
+    { left: '\\(',  right: '\\)',  display: false },
   ],
   throwOnError: false,
 };
@@ -428,8 +430,9 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
     const snap = state;
     setHintModal(false);
 
-    // 창작문제는 저장된 hint 필드 사용 (AI 호출 없음)
-    if (problem.isCreative && problem.hint) {
+    // 창작문제 첫 번째 힌트: 저장된 hint 필드 사용 (AI 호출 없음)
+    // 이후 힌트 요청은 일반 AI 경로로 폴스루
+    if (problem.isCreative && problem.hint && snap.hintsLog.length === 0) {
       const newLog = [...snap.hintsLog, { question, hintText: problem.hint }];
       updateState(idx, { hintsLog: newLog });
       openHintInLog(newLog);
@@ -697,8 +700,8 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
           </div>
         )}
 
-        {/* 힌트 히스토리 */}
-        {hintsLog.length > 0 && (
+        {/* 힌트 히스토리 — MCQ는 답안 아래에 렌더링, 나머지는 여기 */}
+        {hintsLog.length > 0 && !isMcq && (
           <div className="hints-section">
             <div className="hints-header">
               <span className="hints-count">힌트 {hintsLog.length}개</span>
@@ -829,6 +832,27 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
                 <summary>풀이 보기</summary>
                 <SolutionDisplay text={problem.solution} />
               </details>
+            )}
+            {/* MCQ 힌트 히스토리 — 답안 아래 */}
+            {hintsLog.length > 0 && (
+              <div className="hints-section" style={{ marginTop: 14 }}>
+                <div className="hints-header">
+                  <span className="hints-count">힌트 {hintsLog.length}개</span>
+                  <button className="btn-reverse" onClick={() => setHintsReversed(v => !v)}>
+                    {hintsReversed ? '↓ 최신순' : '↑ 오래된순'}
+                  </button>
+                </div>
+                <div className="hints-history">
+                  {displayedHints.map((turn, displayIdx) => {
+                    const realIdx = realHintIdx(displayIdx);
+                    return (
+                      <HintItem key={realIdx} turn={turn}
+                        isOpen={openHints[currentIdx]?.has(realIdx) ?? false}
+                        onToggle={() => toggleHint(realIdx)} />
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         ) : (problem?.format === '빈칸채우기' || problem?.format === '단답형') ? (

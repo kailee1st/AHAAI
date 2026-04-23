@@ -1455,6 +1455,10 @@ body {
   font-size: 0.78rem; font-weight: 700; color: var(--text-muted);
   text-transform: uppercase; letter-spacing: 0.05em;
 }
+.add-problem-topic-count {
+  font-size: 0.78rem; font-weight: 600; color: var(--primary);
+  text-transform: none; letter-spacing: 0;
+}
 .add-problem-empty { font-size: 0.85rem; color: var(--text-muted); }
 .add-problem-empty-sub { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
 .add-problem-error { font-size: 0.83rem; color: var(--error); padding: 6px 10px; background: #fff5f5; border-radius: var(--radius-sm); }
