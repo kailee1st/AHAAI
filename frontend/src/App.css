@@ -945,27 +945,30 @@ body {
 /* 편집 가능 요약 본문 */
 .summary-editable {
   flex: 1; overflow-y: auto; padding: 20px 24px;
-  outline: none; font-size: 0.9rem; line-height: 1.8; color: var(--text);
+  outline: none; font-size: 1rem; line-height: 1.75; color: var(--text);
+  text-align: left;
 }
 .summary-editable::-webkit-scrollbar { width: 4px; }
 .summary-editable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
 /* 요약 본문 내부 태그 스타일 */
-.summary-editable h2 { font-size: 1.15rem; font-weight: 800; color: var(--text-h); margin: 22px 0 8px; }
-.summary-editable h3 { font-size: 0.98rem; font-weight: 700; color: var(--accent); margin: 16px 0 6px; }
-.summary-editable p  { margin-bottom: 8px; }
-.summary-editable ul, .summary-editable ol { padding-left: 20px; margin-bottom: 10px; }
-.summary-editable li { margin-bottom: 4px; }
-.summary-editable mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }
-.summary-editable table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.85rem; }
-.summary-editable th, .summary-editable td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
-.summary-editable th { background: var(--code-bg); font-weight: 700; }
-.summary-editable .formula-block { text-align: center; margin: 14px 0; overflow-x: auto; }
-.summary-editable .diagram-note { background: var(--code-bg); border-left: 3px solid var(--accent); padding: 8px 12px; margin: 10px 0; font-size: 0.85rem; border-radius: 0 6px 6px 0; }
+.summary-editable * { text-align: left !important; }
+.summary-editable h2 { font-size: 1.2rem; font-weight: 800; color: var(--text-h); margin: 24px 0 8px; }
+.summary-editable h3 { font-size: 1.05rem; font-weight: 700; color: var(--accent); margin: 16px 0 6px; }
+.summary-editable p  { margin-bottom: 9px; font-size: 1rem; }
+.summary-editable ul, .summary-editable ol { padding-left: 22px; margin-bottom: 10px; }
+.summary-editable li { margin-bottom: 5px; font-size: 1rem; }
+.summary-editable strong { font-weight: 700; color: var(--text-h); }
+.summary-editable mark { background: #fef08a; color: #1a1a1a; border-radius: 2px; padding: 0 2px; }
+.summary-editable table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.95rem; }
+.summary-editable th, .summary-editable td { border: 1px solid var(--border); padding: 7px 12px; text-align: left !important; }
+.summary-editable th { background: var(--code-bg); font-weight: 700; color: var(--text-h); }
+.summary-editable .formula-block { text-align: left !important; margin: 14px 0; overflow-x: auto; padding: 10px 0; }
+.summary-editable .diagram-note { background: var(--code-bg); border-left: 3px solid var(--accent); padding: 8px 12px; margin: 10px 0; font-size: 0.95rem; border-radius: 0 6px 6px 0; }
 .summary-editable .sum-header { border-bottom: 2px solid var(--border); margin-bottom: 20px; padding-bottom: 14px; }
-.summary-editable .sum-source { font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px; }
-.summary-editable .sum-toc ol { margin: 6px 0; padding-left: 18px; }
-.summary-editable .sum-toc li { font-size: 0.85rem; margin-bottom: 3px; }
+.summary-editable .sum-source { font-size: 0.85rem; color: var(--text-muted); margin: 4px 0 10px; }
+.summary-editable .sum-toc ol { margin: 8px 0; padding-left: 20px; }
+.summary-editable .sum-toc li { font-size: 0.95rem; margin-bottom: 4px; }
 
 /* ── Blank 모달 ── */
 .blank-modal { width: min(640px, 94vw); max-height: 90vh; display: flex; flex-direction: column; }
