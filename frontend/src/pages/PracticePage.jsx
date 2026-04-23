@@ -602,7 +602,7 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
   }
 
   return (
-    <div className="practice-page">
+    <div className={`practice-page ${showStudyDrawer ? 'with-study-panel' : ''}`}>
       {/* ── 모드 스위처 ── */}
       <nav className="mode-switcher">
         <button className="btn-back" onClick={onBack}>← Home</button>
@@ -616,26 +616,17 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
             <button
               className={`panel-toggle-btn ${showStudyDrawer ? 'ptb-active' : ''}`}
               onClick={() => setShowStudyDrawer(v => !v)}
-              title="공부 패널 열기"
+              title="공부 패널 열기/닫기"
             >📖 공부</button>
           )}
           <button className="btn-settings" onClick={() => setShowSettings(v => !v)} title="문제 설정">⚙️</button>
         </div>
       </nav>
 
-      {/* ── 공부 슬라이드 드로어 ── */}
-      {showStudyDrawer && (
-        <div className="study-drawer-overlay" onClick={() => setShowStudyDrawer(false)} />
-      )}
-      <div className={`study-drawer ${showStudyDrawer ? 'open' : ''}`}>
-        <div className="study-drawer-header">
-          <span>📖 공부 패널</span>
-          <button className="panel-close-btn" onClick={() => setShowStudyDrawer(false)}>✕</button>
-        </div>
-        <div className="study-drawer-body">
-          <StudyContent chapter={chapter} chapterId={chapterId} />
-        </div>
-      </div>
+      {/* ── 메인 분할 레이아웃 ── */}
+      <div className="practice-layout">
+        {/* 문제 영역 */}
+        <div className="practice-main">
 
       {/* 설정 패널 */}
       {showSettings && (
@@ -970,6 +961,21 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
           onClose={() => setShowAddModal(false)}
         />
       )}
+        </div>{/* /practice-main */}
+
+        {/* ── 우측 공부 패널 ── */}
+        {showStudyDrawer && chapter && (
+          <div className="practice-study-panel">
+            <div className="study-drawer-header">
+              <span>📖 공부 패널</span>
+              <button className="panel-close-btn" onClick={() => setShowStudyDrawer(false)}>✕</button>
+            </div>
+            <div className="study-drawer-body">
+              <StudyContent chapter={chapter} chapterId={chapterId} />
+            </div>
+          </div>
+        )}
+      </div>{/* /practice-layout */}
     </div>
   );
 }

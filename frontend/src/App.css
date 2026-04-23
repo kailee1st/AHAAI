@@ -994,22 +994,20 @@ body {
   width: 100%;
 }
 
-/* ── 문제모드 공부 슬라이드 드로어 ── */
-.study-drawer-overlay {
-  position: fixed; inset: 0; z-index: 299;
-  background: rgba(0,0,0,0.25);
+/* ── 문제모드 레이아웃 ── */
+.practice-layout {
+  display: flex; flex: 1; overflow: hidden; height: calc(100vh - 48px);
 }
-.study-drawer {
-  position: fixed; top: 0; right: 0;
-  width: 420px; max-width: 92vw; height: 100vh;
-  background: var(--surface); border-left: 1px solid var(--border);
-  box-shadow: -6px 0 24px rgba(0,0,0,0.12);
-  z-index: 300;
+.practice-main {
+  flex: 1; overflow-y: auto; min-width: 0;
+}
+.practice-study-panel {
+  width: 380px; flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
   display: flex; flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
 }
-.study-drawer.open { transform: translateX(0); }
 .study-drawer-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 16px; border-bottom: 1px solid var(--border);
