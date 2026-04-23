@@ -14,6 +14,6 @@ const firebaseConfig = {
   measurementId:     "G-MGJSJE50B5",
 };
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db   = getFirestore(app);
