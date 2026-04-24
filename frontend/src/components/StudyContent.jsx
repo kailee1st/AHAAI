@@ -111,33 +111,53 @@ function SummaryPanel({ html, chapterId }) {
 
 // ─── 탭 목록 — 새 기능 추가 시 여기에만 추가 ───
 const TABS = [
+  { id: 'original',  label: '📄 원본' },
   { id: 'summary',   label: '✦ 요약' },
   { id: 'flashcard', label: '🃏 플래시카드' },
   { id: 'memo',      label: '📝 메모' },
   // { id: 'mindmap', label: '🗺 마인드맵' },
 ];
 
-export default function StudyContent({ chapter, chapterId }) {
-  const [activeTab, setActiveTab] = useState('summary');
-  const summary = chapter?.summary ?? null;
-  const id      = chapterId ?? chapter?.id ?? 'builtin';
+// showOriginal=false이면 원본 탭 숨김 (문제모드 패널 등)
+export default function StudyContent({ chapter, chapterId, showOriginal = true }) {
+  const summary       = chapter?.summary ?? null;
+  const extractedText = chapter?.extractedText ?? null;
+  const pdfUrl        = chapter?.pdfUrl ?? null;
+  const source        = chapter?.source ?? null;
+  const id            = chapterId ?? chapter?.id ?? 'builtin';
+
+  const visibleTabs = showOriginal ? TABS : TABS.filter(t => t.id !== 'original');
+  const [activeTab, setActiveTab] = useState(showOriginal ? 'original' : 'summary');
 
   return (
     <div className="study-content">
       {/* 탭 바 */}
-      {TABS.length > 1 && (
-        <div className="study-content-tabs">
-          {TABS.map(t => (
-            <button key={t.id}
-              className={`study-content-tab ${activeTab === t.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(t.id)}
-            >{t.label}</button>
-          ))}
-        </div>
-      )}
+      <div className="study-content-tabs">
+        {visibleTabs.map(t => (
+          <button key={t.id}
+            className={`study-content-tab ${activeTab === t.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(t.id)}
+          >{t.label}</button>
+        ))}
+      </div>
 
       {/* 탭 콘텐츠 */}
       <div className="study-content-body">
+        {activeTab === 'original' && (
+          <div className="study-panel-body study-panel-body-pdf">
+            {pdfUrl ? (
+              <iframe className="pdf-iframe" src={pdfUrl} title="PDF 미리보기" />
+            ) : extractedText ? (
+              <pre className="orig-text">{extractedText}</pre>
+            ) : (
+              <div className="original-placeholder">
+                <div className="orig-icon">📎</div>
+                <p className="orig-filename">{source ?? ''}</p>
+                <p className="orig-note">원본 텍스트가 저장되지 않았습니다.</p>
+              </div>
+            )}
+          </div>
+        )}
         {activeTab === 'summary' && (
           summary
             ? <SummaryPanel html={summary} chapterId={id} />

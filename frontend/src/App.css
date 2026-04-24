@@ -852,9 +852,14 @@ body {
 .panel-toggle-btn:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 .panel-toggle-btn.ptb-active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 
-/* 패널 컨테이너 */
+/* 패널 컨테이너 (레거시 — 사용 안 함) */
 .study-panels-v2 {
   display: flex; flex: 1; overflow: hidden; position: relative;
+}
+
+/* 탭형 공부 페이지 */
+.study-content-page {
+  flex: 1; overflow: hidden; display: flex; flex-direction: column;
 }
 
 /* 개별 패널 */

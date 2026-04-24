@@ -971,7 +971,7 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
               <button className="panel-close-btn" onClick={() => setShowStudyDrawer(false)}>✕</button>
             </div>
             <div className="study-drawer-body">
-              <StudyContent chapter={chapter} chapterId={chapterId} />
+              <StudyContent chapter={chapter} chapterId={chapterId} showOriginal={false} />
             </div>
           </div>
         )}
