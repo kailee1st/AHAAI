@@ -284,49 +284,39 @@ async def process_youtube(req: YouTubeRequest):
         except Exception:
             pass
 
-        # 자막 추출 — 신버전(list 메서드) / 구버전(list_transcripts) 모두 지원
+        # 자막 추출 — v1.x(인스턴스) / v0.x(클래스메서드) 모두 지원
         try:
-            def _extract_text(entries):
+            def _to_text(entries):
                 return " ".join(
                     (e.get("text", "") if isinstance(e, dict) else getattr(e, "text", ""))
                     for e in entries
                 ).strip()
 
             text = ""
-            # 방법 1: 언어 우선순위 지정 (가장 안정적)
+
+            # v1.x: YouTubeTranscriptApi() 인스턴스 기반
             try:
-                entries = YouTubeTranscriptApi.get_transcript(video_id, languages=['ko', 'en'])
-                text = _extract_text(entries)
+                api_instance = YouTubeTranscriptApi()
+                fetch_fn = getattr(api_instance, 'fetch', None)
+                if fetch_fn:
+                    try:
+                        text = _to_text(fetch_fn(video_id, languages=['ko', 'en']))
+                    except Exception:
+                        text = _to_text(fetch_fn(video_id))
             except Exception:
                 pass
 
-            # 방법 2: 언어 지정 없이 아무 자막이나
+            # v0.x: 클래스 메서드 get_transcript
             if not text:
                 try:
-                    entries = YouTubeTranscriptApi.get_transcript(video_id)
-                    text = _extract_text(entries)
+                    cls_get = getattr(YouTubeTranscriptApi, 'get_transcript', None)
+                    if cls_get:
+                        try:
+                            text = _to_text(cls_get(video_id, languages=['ko', 'en']))
+                        except Exception:
+                            text = _to_text(cls_get(video_id))
                 except Exception:
                     pass
-
-            # 방법 3: list/list_transcripts API (구버전 fallback)
-            if not text:
-                list_fn = getattr(YouTubeTranscriptApi, 'list', None) or getattr(YouTubeTranscriptApi, 'list_transcripts', None)
-                if list_fn:
-                    tl = list_fn(video_id)
-                    transcript = None
-                    for lang in ['ko', 'en']:
-                        try:
-                            transcript = tl.find_transcript([lang])
-                            break
-                        except Exception:
-                            pass
-                    if transcript is None:
-                        for t in tl:
-                            transcript = t
-                            break
-                    if transcript:
-                        entries = transcript.fetch()
-                        text = _extract_text(entries)
 
             if not text:
                 raise HTTPException(status_code=400, detail="이 영상에는 자막이 없습니다. 자막이 있는 영상을 사용해주세요.")
