@@ -284,31 +284,55 @@ async def process_youtube(req: YouTubeRequest):
         except Exception:
             pass
 
-        # 자막 추출 (한국어 → 영어 → 자동생성 순)
+        # 자막 추출 — 신버전(list 메서드) / 구버전(list_transcripts) 모두 지원
         try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            transcript = None
-            for lang in ['ko', 'en']:
+            def _extract_text(entries):
+                return " ".join(
+                    (e.get("text", "") if isinstance(e, dict) else getattr(e, "text", ""))
+                    for e in entries
+                ).strip()
+
+            text = ""
+            # 방법 1: 언어 우선순위 지정 (가장 안정적)
+            try:
+                entries = YouTubeTranscriptApi.get_transcript(video_id, languages=['ko', 'en'])
+                text = _extract_text(entries)
+            except Exception:
+                pass
+
+            # 방법 2: 언어 지정 없이 아무 자막이나
+            if not text:
                 try:
-                    transcript = transcript_list.find_transcript([lang])
-                    break
+                    entries = YouTubeTranscriptApi.get_transcript(video_id)
+                    text = _extract_text(entries)
                 except Exception:
                     pass
-            if transcript is None:
-                # 자동생성 자막 시도
-                for t in transcript_list:
-                    transcript = t
-                    break
-            if transcript is None:
-                raise HTTPException(status_code=400, detail="이 영상에는 자막이 없습니다.")
-            entries = transcript.fetch()
-            # 버전에 따라 dict 또는 객체
-            text = " ".join(
-                (e.get("text", "") if isinstance(e, dict) else e.text)
-                for e in entries
-            ).strip()
-        except (NoTranscriptFound, TranscriptsDisabled):
-            raise HTTPException(status_code=400, detail="이 영상에는 자막이 없습니다. 자막이 있는 영상을 사용해주세요.")
+
+            # 방법 3: list/list_transcripts API (구버전 fallback)
+            if not text:
+                list_fn = getattr(YouTubeTranscriptApi, 'list', None) or getattr(YouTubeTranscriptApi, 'list_transcripts', None)
+                if list_fn:
+                    tl = list_fn(video_id)
+                    transcript = None
+                    for lang in ['ko', 'en']:
+                        try:
+                            transcript = tl.find_transcript([lang])
+                            break
+                        except Exception:
+                            pass
+                    if transcript is None:
+                        for t in tl:
+                            transcript = t
+                            break
+                    if transcript:
+                        entries = transcript.fetch()
+                        text = _extract_text(entries)
+
+            if not text:
+                raise HTTPException(status_code=400, detail="이 영상에는 자막이 없습니다. 자막이 있는 영상을 사용해주세요.")
+
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"자막 추출 실패: {str(e)}")
 
