@@ -1662,3 +1662,167 @@ body {
 /* 창작문제 모달 — 비활성 단계 */
 .add-problem-step-disabled { opacity: 0.4; pointer-events: none; }
 .add-problem-step-hint { font-size: 0.78rem; color: var(--text-muted); font-style: italic; margin-top: 4px; }
+
+
+/* ════════════════════════════════
+   About Us 페이지
+════════════════════════════════ */
+.about-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+}
+
+.about-hero {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.about-logo {
+  font-size: 3rem;
+  color: var(--primary);
+  display: block;
+  margin-bottom: 16px;
+}
+
+.about-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.about-tagline {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto 28px;
+  line-height: 1.8;
+}
+
+.about-cta {
+  font-size: 1rem;
+  padding: 12px 32px;
+}
+
+.about-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 56px;
+}
+
+.about-feature-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.feature-icon {
+  font-size: 1.8rem;
+}
+
+.about-feature-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.about-feature-card p {
+  font-size: 0.87rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.about-footer-note {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.about-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+.about-link:hover { text-decoration: underline; }
+
+/* ════════════════════════════════
+   Desmos 패널
+════════════════════════════════ */
+.desmos-panel {
+  width: 420px;
+  min-width: 320px;
+  border-left: 1px solid var(--border);
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.desmos-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: var(--card-bg);
+}
+
+.desmos-container {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ════════════════════════════════
+   문제 모드 우측 세로 탭
+════════════════════════════════ */
+.practice-main {
+  position: relative;
+}
+
+.practice-side-tabs {
+  position: absolute;
+  right: -40px;
+  top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+}
+
+.side-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  cursor: pointer;
+  font-size: 1.1rem;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s, color 0.15s;
+  min-width: 40px;
+}
+
+.side-tab-btn span {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-family: inherit;
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  letter-spacing: 0.05em;
+}
+
+.side-tab-btn:hover { background: #f5f3ff; }
+.side-tab-active { background: #f5f3ff; border-color: var(--primary-light); }
+.side-tab-active span { color: var(--primary); }

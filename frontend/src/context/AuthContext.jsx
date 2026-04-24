@@ -103,9 +103,11 @@ export function AuthProvider({ children }) {
 
   const UPLOAD_LIMIT = 3;  // 월 업로드 횟수
   const HINT_LIMIT   = 10; // 일 힌트 횟수
+  const ADMIN_UIDS   = new Set(['abGEMZrchdQdNds2QsvnrNlcXe03']);
 
   async function checkUploadLimit() {
     if (!user) return { allowed: false, remaining: 0 };
+    if (ADMIN_UIDS.has(user.uid)) return { allowed: true, remaining: Infinity };
     const plan = profile?.subscription?.plan ?? 'free';
     if (plan !== 'free') return { allowed: true, remaining: Infinity };
     const ref  = doc(db, 'users', user.uid);
@@ -122,7 +124,8 @@ export function AuthProvider({ children }) {
   }
 
   async function checkHintLimit() {
-    if (!user) return { allowed: true, remaining: Infinity }; // 비로그인은 체크 안 함
+    if (!user) return { allowed: true, remaining: Infinity };
+    if (ADMIN_UIDS.has(user.uid)) return { allowed: true, remaining: Infinity };
     const plan = profile?.subscription?.plan ?? 'free';
     if (plan !== 'free') return { allowed: true, remaining: Infinity };
     const ref  = doc(db, 'users', user.uid);

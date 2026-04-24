@@ -8,6 +8,7 @@ import PracticePage from './pages/PracticePage';
 import ProblemReviewPage from './pages/ProblemReviewPage';
 import AccountPage from './pages/AccountPage';
 import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
 import { DEMO_CHAPTER, BUILTIN_LIMITS_CHAPTER } from './data/demoChapter';
 import { processFile, processText, processYouTube } from './api/client';
 import { saveChapterToFirestore, deleteChapterFromFirestore, loadChaptersFromFirestore } from './api/firestore';
@@ -76,7 +77,7 @@ function AppInner() {
       setFolders([]);
     }
     // 페이지 초기화
-    setMode('home');
+    setMode(user ? 'home' : 'about');
     setChapterId(null);
   }, [user?.uid]);
 
@@ -285,6 +286,7 @@ function AppInner() {
     setMode('problem-review');
   }
   function goHome()    { setMode('home'); }
+  function goAbout()   { setMode('about'); }
   function goAccount() { setMode('account'); }
 
   const currentChapter = chapterId ? chapters.find(c => c.id === chapterId) ?? null : null;
@@ -295,10 +297,15 @@ function AppInner() {
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(v => !v)}
         onNavigateHome={goHome}
+        onAboutClick={goAbout}
         onLoginClick={() => setShowLogin(true)}
         onAccountClick={goAccount}
       />
       <div className="app-content">
+        {/* About Us */}
+        {mode === 'about' && (
+          <AboutPage onLoginClick={() => setShowLogin(true)} />
+        )}
         {/* 비로그인 → 랜딩 페이지 */}
         {!user && mode === 'home' && (
           <LandingPage onLoginClick={() => setShowLogin(true)} />

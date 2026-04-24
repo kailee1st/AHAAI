@@ -10,7 +10,7 @@ function PersonIcon() {
   );
 }
 
-export default function AppSidebar({ collapsed, onToggleCollapse, onNavigateHome, onLoginClick, onAccountClick }) {
+export default function AppSidebar({ collapsed, onToggleCollapse, onNavigateHome, onAboutClick, onLoginClick, onAccountClick }) {
   const { user } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
 
@@ -39,6 +39,14 @@ export default function AppSidebar({ collapsed, onToggleCollapse, onNavigateHome
         >
           <span className="nav-icon">🏠</span>
           {!collapsed && <span>Dashboard</span>}
+        </button>
+        <button
+          className="sidebar-nav-item"
+          onClick={onAboutClick}
+          title={collapsed ? 'About Us' : undefined}
+        >
+          <span className="nav-icon">ℹ️</span>
+          {!collapsed && <span>About Us</span>}
         </button>
       </div>
 

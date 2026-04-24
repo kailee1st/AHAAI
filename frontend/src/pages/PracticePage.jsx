@@ -9,6 +9,7 @@ import { BUILTIN_PROBLEMS, RESERVE_PROBLEMS, isCorrect } from '../data/builtinPr
 import { getHint, analyzeWrongAnswer, gradeAnswer, solveProblem, generateSingleProblem } from '../api/client';
 import AddProblemModal from '../components/AddProblemModal';
 import StudyContent from '../components/StudyContent';
+import DesmosPanel from '../components/DesmosPanel';
 
 const KATEX_OPTIONS = {
   delimiters: [
@@ -227,6 +228,7 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
   const [choicesGenerating, setChoicesGenerating] = useState(false);
   const [inputError, setInputError] = useState('');
   const [showStudyDrawer, setShowStudyDrawer] = useState(false);
+  const [showDesmos,      setShowDesmos]      = useState(false);
 
   const inputRef    = useRef(null);
   // 마운트 여부 추적 — 초기 렌더에서 pState를 localStorage에 덮어쓰지 않도록
@@ -611,22 +613,28 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
         )}
         <button className="mode-tab mode-tab-active">✏️ 문제</button>
         <span className="chapter-label">{chapterTitle}</span>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {chapter && (
-            <button
-              className={`panel-toggle-btn ${showStudyDrawer ? 'ptb-active' : ''}`}
-              onClick={() => setShowStudyDrawer(v => !v)}
-              title="공부 패널 열기/닫기"
-            >📖 공부</button>
-          )}
-          <button className="btn-settings" onClick={() => setShowSettings(v => !v)} title="문제 설정">⚙️</button>
-        </div>
+        <button className="btn-settings" onClick={() => setShowSettings(v => !v)} title="문제 설정">⚙️</button>
       </nav>
 
       {/* ── 메인 분할 레이아웃 ── */}
       <div className="practice-layout">
         {/* 문제 영역 */}
         <div className="practice-main">
+        {/* 우측 세로 탭 버튼 */}
+        <div className="practice-side-tabs">
+          {chapter && (
+            <button
+              className={`side-tab-btn ${showStudyDrawer ? 'side-tab-active' : ''}`}
+              onClick={() => setShowStudyDrawer(v => !v)}
+              title="공부 패널"
+            >📖<span>공부</span></button>
+          )}
+          <button
+            className={`side-tab-btn ${showDesmos ? 'side-tab-active' : ''}`}
+            onClick={() => setShowDesmos(v => !v)}
+            title="그래프"
+          >📈<span>그래프</span></button>
+        </div>
 
       {/* 설정 패널 */}
       {showSettings && (
@@ -974,6 +982,11 @@ export default function PracticePage({ chapterId, chapter: chapterProp, initialP
               <StudyContent chapter={chapter} chapterId={chapterId} showOriginal={false} />
             </div>
           </div>
+        )}
+
+        {/* ── 우측 Desmos 패널 ── */}
+        {showDesmos && (
+          <DesmosPanel onClose={() => setShowDesmos(false)} />
         )}
       </div>{/* /practice-layout */}
     </div>
