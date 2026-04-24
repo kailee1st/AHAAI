@@ -7,6 +7,7 @@ import StudyPage from './pages/StudyPage';
 import PracticePage from './pages/PracticePage';
 import ProblemReviewPage from './pages/ProblemReviewPage';
 import AccountPage from './pages/AccountPage';
+import LandingPage from './pages/LandingPage';
 import { DEMO_CHAPTER, BUILTIN_LIMITS_CHAPTER } from './data/demoChapter';
 import { processFile, processText, processYouTube } from './api/client';
 import { saveChapterToFirestore, deleteChapterFromFirestore, loadChaptersFromFirestore } from './api/firestore';
@@ -298,7 +299,12 @@ function AppInner() {
         onAccountClick={goAccount}
       />
       <div className="app-content">
-        {mode === 'home' && (
+        {/* 비로그인 → 랜딩 페이지 */}
+        {!user && mode === 'home' && (
+          <LandingPage onLoginClick={() => setShowLogin(true)} />
+        )}
+        {/* 로그인 → 대시보드 */}
+        {user && mode === 'home' && (
           <HomePage
             uploading={uploading}
             uploadError={uploadError}
